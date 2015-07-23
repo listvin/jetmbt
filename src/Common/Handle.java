@@ -9,14 +9,14 @@ import java.net.URL;
 public class Handle {
     public final URL url;
 
-    public final String XPATH;
+    public final String xpath;
 
-    public int elType;
+    public int eltype;
 
-    public Handle(URL iurl, String xpath, int eltype) {
-        url = iurl;
-        XPATH = xpath;
-        elType = eltype;
+    public Handle(URL url, String xpath, int eltype) {
+        this.url = url;
+        this.xpath = xpath;
+        this.eltype = eltype;
     }
 
     //TODO: shortestparent + depth
