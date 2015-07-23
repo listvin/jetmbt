@@ -18,4 +18,6 @@ public class Handle {
         XPATH = xpath;
         elType = eltype;
     }
+
+    //TODO: shortestparent + depth
 }
