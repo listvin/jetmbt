@@ -4,12 +4,12 @@ package Common;
  * Created by user on 7/23/15.
  */
 public class Edge {
-    public final Event dest;
+    public final Event destination;
 
     private boolean explored;
 
-    public Edge(Event dest) {
-        this.dest = dest;
+    public Edge(Event destination) {
+        this.destination = destination;
         explored = false;
     }
 
