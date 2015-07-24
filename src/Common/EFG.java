@@ -64,10 +64,11 @@ public class EFG {
     }
 
     /**
+     * This performs random choice of next node in graph to go from source among unticked edges only.
      * @param source Event to determinate the beginning of set of edges to select from.
      * @return If there are some unexplored edges outgoing from source, this returns it, and marks as explored.
      */
-    public Edge pickUpAnyUnexploredEdge(Event source){
+    public Event pickEventToGoFrom(Event source){
         //TODO: optimize selection of random edge
         EdgeList list = adjList.get(source);
         if (list.countOfUnexplored == 0) return null;
@@ -77,7 +78,7 @@ public class EFG {
         //Setting here edge as explored in Edge itself and in EdgeList counter
         list.get(num).setTicked();
         --list.countOfUnexplored;
-        return list.get(num);
+        return list.get(num).destination;
     }
 
     /**

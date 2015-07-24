@@ -26,11 +26,7 @@ public class Sequence extends ArrayList<Event>{
      * @param driver WebDriver in which sequence should be played.
      */
     public void play(WebDriver driver) throws NoSuchElementException{
-        for(Event event: this)
-            switch (event.handle.eltype){
-                case clickable: driver.findElement(By.xpath(event.handle.xpath)).click(); break;
-                case writable: driver.findElement(By.xpath(event.handle.xpath)).sendKeys(event.context); break;
-            }
+        for(Event event: this) event.perform(driver);
         //TODO: IRL replay of Sequence should throw something more informative or at least return bool in case of success
     }
 }
