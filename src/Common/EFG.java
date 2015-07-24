@@ -9,10 +9,34 @@ import java.util.*;
  * Created by listvin on 7/23/15.
  */
 public class EFG {
+    private int edgeTickValue = 1;
+    /** This invalidates all tick-marks on all edges.*/
+    public void invalidateTicks(){ ++edgeTickValue; }
+
+    private class Edge {
+        public final Event destination;
+        private int tick0 = 0, tick1 = 0;
+
+        /**@param destination This is target node.*/
+        private Edge(Event destination) {
+            this.destination = destination;
+        }
+
+        boolean isTicked(){ return (tick0 == edgeTickValue);}
+        boolean isTickedTwice(){ return (isTicked() && tick1 == edgeTickValue);}
+        int getTicksCount(){ return (isTicked() ? (isTickedTwice() ? 2 : 1) : 0); }
+        void setTicked(){
+            if (isTicked())
+                tick1 = edgeTickValue;
+            else
+                tick0 = edgeTickValue;
+        }
+    }
     private class EdgeList extends ArrayList<Edge>{
         int countOfUnexplored = 0;
         EdgeList(){ super(); }
     }
+
     private Random random = new Random(239);
     private Map<Event, EdgeList> adjList = new HashMap<Event, EdgeList>();
 
@@ -48,10 +72,10 @@ public class EFG {
         EdgeList list = adjList.get(source);
         if (list.countOfUnexplored == 0) return null;
         int num = random.nextInt() % list.size();
-        while (list.get(num).isExplored())
+        while (list.get(num).isTicked())
             num = num+1 == list.size() ? 0 : num+1;
         //Setting here edge as explored in Edge itself and in EdgeList counter
-        list.get(num).setExplored();
+        list.get(num).setTicked();
         --list.countOfUnexplored;
         return list.get(num);
     }
@@ -65,4 +89,5 @@ public class EFG {
         //TODO
         return false;
     }
+
 }
