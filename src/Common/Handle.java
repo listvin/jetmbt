@@ -11,13 +11,21 @@ public class Handle {
 
     public final String xpath;
 
-    public int eltype;
+    public ElementType eltype;
 
-    public Handle(URL url, String xpath, int eltype) {
+    public Handle(URL url, String xpath, ElementType eltype) {
         this.url = url;
         this.xpath = xpath;
         this.eltype = eltype;
     }
+
+    public Handle(URL url, String xpath) {
+        this.url = url;
+        this.xpath = xpath;
+        this.eltype = ElementType.unknown;
+    }
+
+
 
     //TODO: shortestparent + depth
 }
