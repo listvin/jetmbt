@@ -42,25 +42,27 @@ public class EFG {
 
     /**
      * Adds one edge. See {@link #addEdges(Event, List)} to add edges in batch.
-     * @param source Adding edges comes out from this Event-node...
+     * @param edgeList Adding edge to this list... Should exist.
      * @param destination ...and comes to this one.
      */
-    public void addEdge(Event source, Event destination){
+    private void addEdge(EdgeList edgeList, Event destination){
         //1. Destination event of edge which is being added may be new one. Let's check whether it exists and add if needed
         if (!adjList.containsKey(destination))
             adjList.put(destination, new EdgeList());
         //2. Adding edge to the certain list of outgoing paths
-        ++adjList.get(source).countOfUnexplored;
-        adjList.get(source).add(new Edge(destination));
+        ++edgeList.countOfUnexplored;
+        edgeList.add(new Edge(destination));
     }
 
     /**
-     * Should be used (typically after scanning) to add edges in batch. See {@link #addEdge(Event, Event)} to add one edge.
-     * @param source All adding edges come out from this Event-node.
+     * Should be used (typically after scanning) to add edges in batch. See {@link #addEdge(EdgeList, Event)} to add one edge.
+     * @param source All adding edges come out from this Event-node. Being add
      * @param destList This is list of destination events to add edges to.
      */
     public void addEdges(Event source, List <Event> destList){
-        for (Event destination : destList) addEdge(source, destination);
+        if (!adjList.containsKey(source))
+            adjList.put(source, new EdgeList());
+        for (Event destination : destList) addEdge(adjList.get(source), destination);
     }
 
     /**

@@ -1,6 +1,5 @@
 package Common;
 
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
 import java.util.ArrayList;
@@ -21,6 +20,18 @@ public class Sequence extends ArrayList<Event>{
     public Sequence(List<Event> list) {
         super(list);
     }
+
+    /**
+     * Factory method to produce new Sequence on one Event longer than parent.
+     * @param increment Event to append.
+     * @return Requested sequence.
+     */
+    public Sequence createAppended(Event increment){
+        Sequence result = new Sequence(this);
+        result.add(increment);
+        return result;
+    }
+
     /**
      * Plays stored sequence of events, throws NoSuchElementException if one of events can't be performed.
      * @param driver WebDriver in which sequence should be played.
