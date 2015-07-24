@@ -1,33 +1,29 @@
 package Common;
 
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
+ * Immutable class to store in reach states of browsing experience.
  * Created by user on 7/23/15.
  */
 public class State {
     final URL url;
-    List<Event> sequence ;
+    final Sequence sequence;
 
-    public State(URL url, List<Event> sequence){
+    /**Makes state based on copy of sent sequence.*/
+    public State(URL url, Sequence sequence){
         this.url = url;
-        this.sequence = new ArrayList<Event>(sequence);
+        this.sequence = new Sequence(sequence);
     }
 
-    public void replaySequence(WebDriver driver){
+    /**
+     * This reaches state stored inside. First goes to the URL, then plays sequence
+     * @param driver WebDriver to come to state in.
+     */
+    public void reach(WebDriver driver){
         driver.get(url.toString());
-        for(Event e: sequence){
-            if(e.handle.eltype.equals(ElementType.clickable)){
-                driver.findElement(By.xpath(e.handle.xpath)).click();
-            }
-            if(e.handle.eltype.equals(ElementType.writable)){
-                driver.findElement(By.xpath(e.handle.xpath)).sendKeys(e.context);
-            }
-        }
+        sequence.play(driver);
     }
 }
