@@ -6,6 +6,7 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -21,6 +22,26 @@ public class Utils {
 
     /**
      *
+     * @param image - image to be converted to grayscale
+     */
+    public static void convertImageToGrayscale(BufferedImage image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        for(int i=0; i<height; i++){
+            for(int j=0; j<width; j++){
+                Color c = new Color(image.getRGB(j, i));
+                int red = (int)(c.getRed() * 0.21);
+                int green = (int)(c.getGreen() * 0.72);
+                int blue = (int)(c.getBlue() *0.07);
+                int sum = red + green + blue;
+                Color newColor = new Color(sum,sum,sum);
+                image.setRGB(j,i,newColor.getRGB());
+            }
+        }
+    }
+
+    /**
+     *
      * @param driver - WebDriver whose state will be hashed
      * @return
      */
@@ -30,6 +51,7 @@ public class Utils {
 
         try {
             BufferedImage buffImg = ImageIO.read(scrFile);
+            convertImageToGrayscale(buffImg);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ImageIO.write(buffImg, "png", outputStream);
             byte[] data = outputStream.toByteArray();

@@ -4,6 +4,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -17,7 +18,9 @@ public class Sequence extends ArrayList<Event>{
     public Sequence(Sequence sequence){
         super(sequence);
     }
-
+    public Sequence(List<Event> list) {
+        super(list);
+    }
     /**
      * Plays stored sequence of events, throws NoSuchElementException if one of events can't be performed.
      * @param driver WebDriver in which sequence should be played.

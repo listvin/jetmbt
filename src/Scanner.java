@@ -82,12 +82,22 @@ public class Scanner {
         try {
             URL currentURL = new URL(driver.getCurrentUrl());
             if(currentURL.getHost().equals(handle.url.getHost())){
+                if(!currentURL.getRef().equals(handle.url.getRef())){
+                    return ElementType.clickable;
+                }
                 if(driver.findElements(By.xpath(handle.xpath)).size() > 0){
+                    String oldValue = driver.findElement(By.xpath(handle.xpath)).getAttribute("value");
                     driver.findElement(By.xpath(handle.xpath)).sendKeys("aba");
-                    if(Utils.hashPage(driver).equals(newHash)){
-                        return ElementType.clickable;
-                    }else{
+                    driver.switchTo().defaultContent();
+                    String newValue = null;
+
+                    if(!driver.findElements(By.xpath(handle.xpath)).isEmpty()) {
+                        newValue = driver.findElement(By.xpath(handle.xpath)).getAttribute("value");
+                    }
+                    if((newValue != null) && (!newValue.equals(oldValue))){
                         return ElementType.writable;
+                    }else{
+                        return ElementType.clickable;
                     }
                 }else{
                     return ElementType.clickable;
@@ -108,7 +118,7 @@ public class Scanner {
 
         WebDriver driver = new FirefoxDriver();
         login(driver);
-        baseURL = "unit-775:8080/issue/fsefs-1";
+        baseURL = "http://unit-775:8080/issue/fsefs-1";
 
         driver.get(baseURL);
         try {
@@ -119,29 +129,40 @@ public class Scanner {
         List<WebElement> el = driver.findElements(By.cssSelector("*"));
         System.out.println(el.size());
         List<Handle> intercatableHandles = new ArrayList<Handle>();
-
+        List<Handle> allHandles = new ArrayList<Handle>();
 
         try {
             Handle BaseHandle = new Handle(new URL(baseURL), "");
-            State baseState = new State(new URL(baseURL), new ArrayList<Event>(Arrays.asList(new Event(BaseHandle, ""))));
+
+            State baseState = new State(new URL(baseURL), new Sequence(Arrays.asList(new Event(BaseHandle, ""))));
+
+/*
+            Handle testHandle = new Handle(new URL(baseURL), "/html[1]/body[1]/div[1]/div[1]/div[1]/a[5]");
+            baseState.reach(driver);
+            checkHandleType(driver, testHandle);
+*/
+
+
             for(WebElement element: el){
-
-                System.out.println("Getting XPATH for element: " + el.toString());
+                if(!element.isDisplayed() || !element.isEnabled()){
+                    continue;
+                }
                 String xpath = Selectors.formXPATH(driver, element);
-                System.out.println(xpath);
-
                 Handle handle = new Handle(new URL(baseURL), xpath);
+                allHandles.add(handle);
+            }
+            for(Handle handle: allHandles){
+                baseState.reach(driver);
+                System.out.println("XPATH for element: " + handle.xpath);
                 handle.eltype = checkHandleType(driver, handle);
                 System.out.println("Determined as " + handle.eltype.name() + "\n");
-                if(handle.eltype.equals(ElementType.clickable) || handle.eltype.equals(ElementType.writable)){
+                if(handle.eltype.equals(ElementType.clickable) || handle.eltype.equals(ElementType.writable)) {
                     intercatableHandles.add(handle);
                 }
-
-
-
             }
-        }catch (MalformedURLException ignored){
-            System.out.print("WTF JUST HAPPANED?!");
+
+        }catch (MalformedURLException e){
+            e.printStackTrace();
 
         }
 
