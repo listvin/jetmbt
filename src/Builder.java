@@ -19,6 +19,7 @@ public class Builder {
         assert arg_url.length == 1 : "one argument expected - URL, to start building from";
         driver.get(arg_url[0]);
         dfs(Event.createFakeTerminal(), new State(new URL(arg_url[0]), new Sequence()), 0);
+        g.dump2dot("dump");
     }
 
     static final int depthLimit = 20;

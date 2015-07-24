@@ -1,5 +1,9 @@
 package Common;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**
@@ -84,13 +88,29 @@ public class EFG {
     }
 
     /**
-     * This generates .dot file with currently stored EFG
-     * @param filename Can be specified.
+     * This generates .gv file with currently stored EFG in DOT format. Overwrites files.
+     * @param name Can be specified.
      * @return True in case of success.
      */
-    public boolean dump2xdot(String filename){
-        //TODO
-        return false;
+    public boolean dump2dot(String name){
+        //TODO make it more readable
+        try {
+            PrintWriter writer = new PrintWriter(name + ".gv", "UTF-8");
+            writer.println("digraph EFG {");
+            writer.printf("\t//first nodes");
+            for (Event node : adjList.keySet())
+                writer.printf("\t\tN%d [label=\"%s\"];", node.hashCode(), node.handle.xpath);
+            writer.printf("\t//now edges");
+            for (Event node : adjList.keySet())
+                for (Edge edge : adjList.get(node))
+                    writer.printf("\t\tN%d -- N%d;", node.hashCode(), edge.destination.hashCode());
+            writer.println("}");
+            writer.close();
+            return true;
+        } catch (Exception e){
+            e.printStackTrace(System.err);
+            return false;
+        }
     }
 
 }
