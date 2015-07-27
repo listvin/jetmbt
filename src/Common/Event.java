@@ -6,7 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * Box for determining an element and what exactly to do with it. Aka node in EFG.
+ * Box for determining an element (by it's Handle) and what exactly to do with it. Aka node in EFG.
  * Created by user on 7/23/15.
  */
 public class Event {

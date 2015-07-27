@@ -1,21 +1,22 @@
-import Common.*;
-import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.*;
-import org.openqa.selenium.firefox.FirefoxDriver;
+        import Common.*;
+        import org.apache.commons.lang3.StringUtils;
+        import org.openqa.selenium.*;
+        import org.openqa.selenium.firefox.FirefoxDriver;
+        import org.openqa.selenium.support.ui.ExpectedConditions;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+        import java.net.MalformedURLException;
+        import java.net.URL;
+        import java.util.ArrayList;
+        import java.util.Arrays;
+        import java.util.List;
+        import java.util.concurrent.TimeUnit;
 
-/**
+        /**
  * Created by user on 7/23/15.
  */
 public class Scanner {
-    private String baseURL = "http://unit-775:8080/issue/fsefs-1";
-    private WebDriver driver;
+    private static String baseURL;
+
 
     public static void login(WebDriver driver){
         driver.get("http://unit-775:8080/login");
@@ -48,22 +49,17 @@ public class Scanner {
         }
         String oldHash = Utils.hashPage(driver);
         String originalHandle = driver.getWindowHandle();
-        try {
-            driver.findElement(By.xpath(handle.xpath)).click();
-        }catch (ElementNotVisibleException e){
-            return ElementType.unknown;
-        }
-
+        driver.findElement(By.xpath(handle.xpath)).click();
         try
         {
             driver.switchTo().alert().dismiss();
 
             return ElementType.terminal;
-        }   // try
+        } // try
         catch (NoAlertPresentException ignored)
         {
 
-        }   // catch
+        } // catch
         if(driver.getWindowHandles().size() != 1){
             for(String handleName : driver.getWindowHandles()) {
                 if (!handleName.equals(originalHandle)) {
@@ -79,7 +75,9 @@ public class Scanner {
             return ElementType.terminal;
         }
         String newHash = Utils.hashPage(driver);
-
+        if (oldHash.equals(newHash)){
+            return ElementType.noninteractive;
+        }
 
         try {
             URL currentURL = new URL(driver.getCurrentUrl());
@@ -99,9 +97,6 @@ public class Scanner {
                     if((newValue != null) && (!newValue.equals(oldValue))){
                         return ElementType.writable;
                     }else{
-                        if (oldHash.equals(newHash)){
-                            return ElementType.noninteractive;
-                        }
                         return ElementType.clickable;
                     }
                 }else{
@@ -118,12 +113,12 @@ public class Scanner {
     }
 
 
-    /**
-     *
-     * @param baseState - state that is desired to be explored
-     * @return - list of all interactable items
-     */
-    public List<Handle> scan(State baseState){
+
+    public static void main(String[] args) {
+        TimeUnit.
+//        ExpectedConditions.
+        WebDriver driver = new FirefoxDriver();
+        login(driver);
         baseURL = "http://unit-775:8080/issue/fsefs-1";
 
         driver.get(baseURL);
@@ -132,15 +127,17 @@ public class Scanner {
         } catch(InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
-        List<Handle> interactableHandles = new ArrayList<Handle>();
-        List<Handle> allHandles = new ArrayList<Handle>();
-
         try {
+            Handle BaseHandle = new Handle(new URL(baseURL), "");
+
+            State baseState = new State(new URL(baseURL), new Sequence(Arrays.asList(new Event(BaseHandle, ""))));
 
             baseState.reach(driver);
 
             List<WebElement> el = driver.findElements(By.cssSelector("*"));
             System.out.println(el.size());
+            List<Handle> interactableHandles = new ArrayList<Handle😠);
+            List<Handle> allHandles = new ArrayList<Handle😠);
 
 
 
@@ -153,6 +150,10 @@ public class Scanner {
                 Handle handle = new Handle(new URL(baseURL), xpath);
                 allHandles.add(handle);
             }
+            //Test
+            Handle testHandle = new Handle(new URL(baseURL), "html[1]/body[1]/div[2]/div[3]/div[2]/div[1]/div[2]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]/span[1]/a[1]");
+            baseState.reach(driver);
+            checkHandleType(driver, testHandle);
 
             for(Handle handle: allHandles){
                 baseState.reach(driver);
@@ -175,20 +176,7 @@ public class Scanner {
 
         }
 
-        return interactableHandles;
-    }
 
-    public Scanner(String baseURL){
-        this.baseURL = baseURL;
-
-    }
-
-    public Scanner(){
-        this.driver = new FirefoxDriver();
-        login(driver);
-
-    }
-    public void close(){
         driver.close();
     }
 }
