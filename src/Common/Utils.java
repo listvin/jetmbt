@@ -41,9 +41,9 @@ public class Utils {
     }
 
     /**
-     *
+     * Method for taking hash of a graphical screenshot of a browser assigned to specific WebDriver
      * @param driver - WebDriver whose state will be hashed
-     * @return
+     * @return hash of the page which was opened in driver
      */
     public static String hashPage(WebDriver driver){
         File scrFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
@@ -68,9 +68,7 @@ public class Utils {
         } catch (FileNotFoundException e) {
             System.out.print("Couldn't calculate state hash");
             e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (NoSuchAlgorithmException | IOException e) {
             e.printStackTrace();
         }
         return hexString;

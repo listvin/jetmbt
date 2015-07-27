@@ -47,7 +47,7 @@ public class Event{
     public static List<Event> generateTestEvents(List<WebHandle> list){
         //TODO here parameters of generated events can be specified
         //TODO writeable are determined as clickables for a while
-        List <Event> result = new ArrayList<Event>();
+        List <Event> result = new ArrayList<>();
         for (WebHandle handle : list) result.add(new Event(handle));
         return result;
     }

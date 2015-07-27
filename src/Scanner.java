@@ -148,8 +148,8 @@ public class Scanner {
         } catch(InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
-        List<WebHandle> interactiveHandles = new ArrayList<WebHandle>();
-        List<WebHandle> allHandles = new ArrayList<WebHandle>();
+        List<WebHandle> interactiveHandles = new ArrayList<>();
+        List<WebHandle> allHandles = new ArrayList<>();
 
             baseState.reach(driver);
 
@@ -191,7 +191,7 @@ public class Scanner {
     public static void main(String args[]) throws MalformedURLException {
         Scanner scanner = new Scanner();
         State baseState = new State(new URL("http://localhost:8080/dashboard"), new Sequence());
-        ArrayList<WebHandle> ints = new ArrayList<WebHandle>(scanner.scan(baseState));
+        ArrayList<WebHandle> ints = new ArrayList<>(scanner.scan(baseState));
         for(WebHandle handle: ints){
             System.out.println(handle.xpath + " " + handle.eltype.name());
         }

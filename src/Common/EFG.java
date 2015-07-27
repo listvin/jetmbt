@@ -42,7 +42,7 @@ public class EFG {
     }
 
     private Random random = new Random(239);
-    private Map<Event, EdgeList> adjList = new HashMap<Event, EdgeList>();
+    private Map<Event, EdgeList> adjList = new HashMap<>();
 
     /**
      * Adds one edge. See {@link #addEdges(Event, List)} to add edges in batch.
@@ -78,7 +78,7 @@ public class EFG {
         //TODO: optimize selection of random edge
         EdgeList list = adjList.get(source);
         if (list.countOfUnexplored == 0) return null;
-        int num = random.nextInt() % list.size();
+        int num = Math.abs(random.nextInt() % list.size());
         while (list.get(num).isTicked())
             num = num+1 == list.size() ? 0 : num+1;
         //Setting here edge as explored in Edge itself and in EdgeList counter
