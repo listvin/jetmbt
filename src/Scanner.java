@@ -57,13 +57,9 @@ public class Scanner {
         try
         {
             driver.switchTo().alert().dismiss();
-
             return ElementType.terminal;
-        }   // try
-        catch (NoAlertPresentException ignored)
-        {
-
-        }   // catch
+        }
+        catch (NoAlertPresentException ignored) {}
         if(driver.getWindowHandles().size() != 1){
             for(String handleName : driver.getWindowHandles()) {
                 if (!handleName.equals(originalHandle)) {
@@ -191,4 +187,16 @@ public class Scanner {
     public void close(){
         driver.close();
     }
+
+    public static void main(String args[]) throws MalformedURLException {
+        Scanner scanner = new Scanner();
+        Handle BaseHandle = new Handle(new  URL("http://unit-775:8080/issue/fsefs-1"), "");
+        State baseState = new State(new URL("http://unit-775:8080/issue/fsefs-1"), new Sequence(Arrays.asList(new Event(BaseHandle, ""))));
+        ArrayList<Handle> ints = new ArrayList<Handle>(scanner.scan(baseState));
+        for(Handle handle: ints){
+            System.out.println(handle.xpath + " " + handle.eltype.name());
+        }
+        scanner.close();
+    }
+
 }
