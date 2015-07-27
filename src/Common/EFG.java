@@ -103,7 +103,7 @@ public class EFG {
             writer.printf("\t//now edges");
             for (Event node : adjList.keySet())
                 for (Edge edge : adjList.get(node))
-                    writer.printf("\t\tN%d -- N%d;", node.hashCode(), edge.destination.hashCode());
+                    writer.printf("\t\tN%d -> N%d;", node.hashCode(), edge.destination.hashCode());
             writer.println("}");
             writer.close();
             return true;
