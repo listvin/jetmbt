@@ -34,7 +34,7 @@ public class State {
     public void reach(WebDriver driver){
         driver.get(url.toString());
         try {
-            Thread.sleep(500);                 //1000 milliseconds is one second.
+            Thread.sleep(100);                 //1000 milliseconds is one second.
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         }

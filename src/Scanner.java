@@ -1,8 +1,6 @@
 import Common.*;
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoAlertPresentException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.apache.commons.lang3.StringUtils;
+import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.net.MalformedURLException;
@@ -10,14 +8,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by user on 7/23/15.
  */
 public class Scanner {
-    private static String baseURL;
-
+    private String baseURL = "http://unit-775:8080/issue/fsefs-1";
+    private WebDriver driver;
 
     public static void login(WebDriver driver){
         driver.get("http://unit-775:8080/login");
@@ -35,7 +33,7 @@ public class Scanner {
 
 
     /**
-     * Determines elementType of geven handle in current Webdriver state
+     * Determines elementType with given handle in current Webdriver state
      *
      * @param driver
      * @param handle
@@ -50,7 +48,12 @@ public class Scanner {
         }
         String oldHash = Utils.hashPage(driver);
         String originalHandle = driver.getWindowHandle();
-        driver.findElement(By.xpath(handle.xpath)).click();
+        try {
+            driver.findElement(By.xpath(handle.xpath)).click();
+        }catch (ElementNotVisibleException e){
+            return ElementType.unknown;
+        }
+
         try
         {
             driver.switchTo().alert().dismiss();
@@ -72,17 +75,16 @@ public class Scanner {
                     break;
                 }
             }
+            driver.switchTo().window(originalHandle);
             return ElementType.terminal;
         }
         String newHash = Utils.hashPage(driver);
-        if (oldHash.equals(newHash)){
-            return ElementType.noninteractive;
-        }
+
 
         try {
             URL currentURL = new URL(driver.getCurrentUrl());
             if(currentURL.getHost().equals(handle.url.getHost())){
-                if(!currentURL.getRef().equals(handle.url.getRef())){
+                if(!StringUtils.equals(currentURL.getRef(), handle.url.getRef())){
                     return ElementType.clickable;
                 }
                 if(driver.findElements(By.xpath(handle.xpath)).size() > 0){
@@ -97,6 +99,9 @@ public class Scanner {
                     if((newValue != null) && (!newValue.equals(oldValue))){
                         return ElementType.writable;
                     }else{
+                        if (oldHash.equals(newHash)){
+                            return ElementType.noninteractive;
+                        }
                         return ElementType.clickable;
                     }
                 }else{
@@ -113,11 +118,12 @@ public class Scanner {
     }
 
 
-
-    public static void main(String[] args) {
-
-        WebDriver driver = new FirefoxDriver();
-        login(driver);
+    /**
+     *
+     * @param baseState - state that is desired to be explored
+     * @return - list of all interactable items
+     */
+    public List<Handle> scan(State baseState){
         baseURL = "http://unit-775:8080/issue/fsefs-1";
 
         driver.get(baseURL);
@@ -126,21 +132,17 @@ public class Scanner {
         } catch(InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
-        List<WebElement> el = driver.findElements(By.cssSelector("*"));
-        System.out.println(el.size());
-        List<Handle> intercatableHandles = new ArrayList<Handle>();
+        List<Handle> interactableHandles = new ArrayList<Handle>();
         List<Handle> allHandles = new ArrayList<Handle>();
 
         try {
-            Handle BaseHandle = new Handle(new URL(baseURL), "");
 
-            State baseState = new State(new URL(baseURL), new Sequence(Arrays.asList(new Event(BaseHandle, ""))));
-
-/*
-            Handle testHandle = new Handle(new URL(baseURL), "/html[1]/body[1]/div[1]/div[1]/div[1]/a[5]");
             baseState.reach(driver);
-            checkHandleType(driver, testHandle);
-*/
+
+            List<WebElement> el = driver.findElements(By.cssSelector("*"));
+            System.out.println(el.size());
+
+
 
 
             for(WebElement element: el){
@@ -151,13 +153,20 @@ public class Scanner {
                 Handle handle = new Handle(new URL(baseURL), xpath);
                 allHandles.add(handle);
             }
+
             for(Handle handle: allHandles){
                 baseState.reach(driver);
                 System.out.println("XPATH for element: " + handle.xpath);
-                handle.eltype = checkHandleType(driver, handle);
+                try {
+                    handle.eltype = checkHandleType(driver, handle);
+                }catch (NoSuchElementException e){
+                    //TODO: affter hovering over button tolltip appears chainging page structure(Extra div) => couldn't handle element.
+                    continue;
+                }
+
                 System.out.println("Determined as " + handle.eltype.name() + "\n");
                 if(handle.eltype.equals(ElementType.clickable) || handle.eltype.equals(ElementType.writable)) {
-                    intercatableHandles.add(handle);
+                    interactableHandles.add(handle);
                 }
             }
 
@@ -166,7 +175,20 @@ public class Scanner {
 
         }
 
+        return interactableHandles;
+    }
 
+    public Scanner(String baseURL){
+        this.baseURL = baseURL;
+
+    }
+
+    public Scanner(){
+        this.driver = new FirefoxDriver();
+        login(driver);
+
+    }
+    public void close(){
         driver.close();
     }
 }
