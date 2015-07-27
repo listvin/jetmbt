@@ -2,23 +2,25 @@ import Common.*;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by user on 7/23/15.
  */
 public class Scanner {
-    private String baseURL = "http://unit-775:8080/issue/fsefs-1";
     private WebDriver driver;
 
-    public static void login(WebDriver driver){
-        driver.get("http://unit-775:8080/login");
+    /** Constructs Scanner by creating a Firefox (at the moment) driver and logging at "http://localhost:8080/login" with root/root*/
+    public Scanner(){
+        this.driver = new FirefoxDriver();
+        //TODO ACHTUNG THIS SHOULD NOT EXIST!!!!
+        driver.get("http://localhost:8080/login");
         try {
             Thread.sleep(500);
         } catch(InterruptedException ex) {
@@ -30,170 +32,167 @@ public class Scanner {
         driver.findElement(By.id("id_l.L.loginButton")).click();
     }
 
-
+    /** Terminates assigned driver*/
+    public void close(){
+        driver.quit();
+    }
 
     /**
      * Determines elementType with given handle in current Webdriver state
-     *
      * @param driver
      * @param handle
      * @return ElementType. unknown if driver url didnt match handle
      * @throws NoSuchElementException when element cant be found by its xpath
      */
     //TODO More precise check for writable type. Mb separate?
-
-    public static ElementType checkHandleType(WebDriver driver, Handle handle) throws NoSuchElementException{
-        if(!driver.getCurrentUrl().equals(handle.url.toString())){
-            return ElementType.unknown;
-        }
-        String oldHash = Utils.hashPage(driver);
-        String originalHandle = driver.getWindowHandle();
+    public static ElementType checkHandleType(WebDriver driver, WebHandle handle) throws NoSuchElementException{
         try {
+            //###### Verifying opened url
+            if (!driver.getCurrentUrl().equals(handle.url.toString()))
+                throw new WebDriverException("URL opened in browser is not corresponding to base URL in state");
+
+            //###### Storing data before tries to interact
+            String oldHash = Utils.hashPage(driver);
+            String oldWindowHandle = driver.getWindowHandle();
             driver.findElement(By.xpath(handle.xpath)).click();
-        }catch (ElementNotVisibleException e){
-            return ElementType.unknown;
-        }
 
-        try
-        {
-            driver.switchTo().alert().dismiss();
-            return ElementType.terminal;
-        }
-        catch (NoAlertPresentException ignored) {}
-        if(driver.getWindowHandles().size() != 1){
-            for(String handleName : driver.getWindowHandles()) {
-                if (!handleName.equals(originalHandle)) {
-                    driver.switchTo().window(handleName);
-                    driver.close();
-                }
-                //Just in case somehow tab wont have sabe handle as before
-                if(driver.getWindowHandles().size() == 1){
-                    break;
-                }
-            }
-            driver.switchTo().window(originalHandle);
-            return ElementType.terminal;
-        }
-        String newHash = Utils.hashPage(driver);
-
-
-        try {
-            URL currentURL = new URL(driver.getCurrentUrl());
-            if(currentURL.getHost().equals(handle.url.getHost())){
-                if(!StringUtils.equals(currentURL.getRef(), handle.url.getRef())){
-                    return ElementType.clickable;
-                }
-                if(driver.findElements(By.xpath(handle.xpath)).size() > 0){
-                    String oldValue = driver.findElement(By.xpath(handle.xpath)).getAttribute("value");
-                    driver.findElement(By.xpath(handle.xpath)).sendKeys("aba");
-                    driver.switchTo().defaultContent();
-                    String newValue = null;
-
-                    if(!driver.findElements(By.xpath(handle.xpath)).isEmpty()) {
-                        newValue = driver.findElement(By.xpath(handle.xpath)).getAttribute("value");
-                    }
-                    if((newValue != null) && (!newValue.equals(oldValue))){
-                        return ElementType.writable;
-                    }else{
-                        if (oldHash.equals(newHash)){
-                            return ElementType.noninteractive;
-                        }
-                        return ElementType.clickable;
-                    }
-                }else{
-                    return ElementType.clickable;
-                }
-            }else{
+            //###### Check if alert window exists
+            if (ExpectedConditions.alertIsPresent().apply(driver) != null){
+                driver.switchTo().alert().dismiss();
+                //TODO allow alerted actions
                 return ElementType.terminal;
             }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+            /* Old alert test: try {
+                driver.switchTo().alert().dismiss();
+                return ElementType.terminal;
+            } catch (NoAlertPresentException ignored) {} */
 
-        return ElementType.unknown;
+            //###### This checks if new windows/tabs were opened
+            if (driver.getWindowHandles().size() > 1) {
+                for (String windowHandle : driver.getWindowHandles())
+                    if (!windowHandle.equals(oldWindowHandle)) {
+                        driver.switchTo().window(windowHandle);
+                        //TODO allow opening new tabs/windows
+                        driver.close();
+                    }
+                driver.switchTo().window(oldWindowHandle);
+                return ElementType.terminal;
+            }
+
+            //###### Collecting data after interaction
+            URL newURL = new URL(driver.getCurrentUrl());
+
+            //TODO The next check seems to be rather boring... Need flow rule for this
+            if (!newURL.getHost().equals(handle.url.getHost()))
+                return ElementType.terminal;
+
+            /* The following seems to be redundant... Just comparing URLs as strings seems to be OK?
+            //This gonna test whether clicking changes "reference" of the URL (after the hash-sign)
+            if (!StringUtils.equals(newURL.getRef(), handle.url.getRef()))
+                return ElementType.clickable;*/
+
+            //###### Checking if URL have changed
+            if (!newURL.equals(handle.url))
+                return ElementType.clickable;
+
+            //###### Comparing screenshots
+            if (oldHash.equals(Utils.hashPage(driver)))
+                return ElementType.noninteractive;
+            else
+                return ElementType.clickable;
+
+            //###### Checking writability
+            //TODO return writability check instead of simple clicker check above
+            /*if (driver.findElements(By.xpath(handle.xpath)).size() > 0) {
+                String oldValue = handle.findElement(driver).getAttribute("value");
+                handle.findElement(driver).sendKeys("aba");
+                driver.switchTo().defaultContent();
+                String newValue = null;
+
+                if (!driver.findElements(By.xpath(handle.xpath)).isEmpty()) {
+                    newValue = driver.findElement(By.xpath(handle.xpath)).getAttribute("value");
+                }
+                if ((newValue != null) && (!newValue.equals(oldValue))) {
+                    return ElementType.writable;
+                } else {
+                    if (oldHash.equals(newHash)) {
+                        return ElementType.noninteractive;
+                    }
+                    return ElementType.clickable;
+                }
+            } else {
+                return ElementType.clickable;
+            }*/
+
+        } catch (ElementNotVisibleException e){
+            /*This happens sometimes right after trying to click on found
+            element. This is strange cause all handles provided to this method
+            are from the list of visible at that moment elements.*/
+            return ElementType.unknown;
+        } catch (MalformedURLException e){
+            /*This is never going to happen because our URL is being constructed
+            from the one which is already opened*/
+            e.printStackTrace();
+            return ElementType.unknown;
+        }
     }
 
-
     /**
-     *
      * @param baseState - state that is desired to be explored
      * @return - list of all interactable items
      */
-    public List<Handle> scan(State baseState){
-        baseURL = "http://unit-775:8080/issue/fsefs-1";
-
-        driver.get(baseURL);
+    public List<WebHandle> scan(State baseState){
+        baseState.reach(driver);
         try {
             Thread.sleep(5000);
         } catch(InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
-        List<Handle> interactableHandles = new ArrayList<Handle>();
-        List<Handle> allHandles = new ArrayList<Handle>();
-
-        try {
+        List<WebHandle> interactiveHandles = new ArrayList<WebHandle>();
+        List<WebHandle> allHandles = new ArrayList<WebHandle>();
 
             baseState.reach(driver);
 
             List<WebElement> el = driver.findElements(By.cssSelector("*"));
             System.out.println(el.size());
 
-
-
-
             for(WebElement element: el){
                 if(!element.isDisplayed() || !element.isEnabled()){
                     continue;
                 }
                 String xpath = Selectors.formXPATH(driver, element);
-                Handle handle = new Handle(new URL(baseURL), xpath);
+                WebHandle handle = new WebHandle(baseState.url, xpath);
                 allHandles.add(handle);
             }
 
-            for(Handle handle: allHandles){
+            for(WebHandle handle: allHandles){
                 baseState.reach(driver);
                 System.out.println("XPATH for element: " + handle.xpath);
                 try {
                     handle.eltype = checkHandleType(driver, handle);
                 }catch (NoSuchElementException e){
-                    //TODO: affter hovering over button tolltip appears chainging page structure(Extra div) => couldn't handle element.
+                    //TODO: after hovering over button tolltip appears chainging page structure(Extra div) => couldn't handle element.
                     continue;
                 }
 
                 System.out.println("Determined as " + handle.eltype.name() + "\n");
-                if(handle.eltype.equals(ElementType.clickable) || handle.eltype.equals(ElementType.writable)) {
-                    interactableHandles.add(handle);
+                //TODO return writables
+//                if(handle.eltype.equals(ElementType.clickable) || handle.eltype.equals(ElementType.writable)) {
+                if(handle.eltype.equals(ElementType.clickable)) {
+                    interactiveHandles.add(handle);
+                    //TODO remove intaractive elements count limit
+                    if (interactiveHandles.size() >= 20) return interactiveHandles;
                 }
             }
-
-        }catch (MalformedURLException e){
-            e.printStackTrace();
-
-        }
-
-        return interactableHandles;
+        return interactiveHandles;
     }
 
-    public Scanner(String baseURL){
-        this.baseURL = baseURL;
-
-    }
-
-    public Scanner(){
-        this.driver = new FirefoxDriver();
-        login(driver);
-
-    }
-    public void close(){
-        driver.close();
-    }
-
+    /**Left for testing at the moment*/
     public static void main(String args[]) throws MalformedURLException {
         Scanner scanner = new Scanner();
-        Handle BaseHandle = new Handle(new  URL("http://unit-775:8080/issue/fsefs-1"), "");
-        State baseState = new State(new URL("http://unit-775:8080/issue/fsefs-1"), new Sequence(Arrays.asList(new Event(BaseHandle, ""))));
-        ArrayList<Handle> ints = new ArrayList<Handle>(scanner.scan(baseState));
-        for(Handle handle: ints){
+        State baseState = new State(new URL("http://localhost:8080/dashboard"), new Sequence());
+        ArrayList<WebHandle> ints = new ArrayList<WebHandle>(scanner.scan(baseState));
+        for(WebHandle handle: ints){
             System.out.println(handle.xpath + " " + handle.eltype.name());
         }
         scanner.close();

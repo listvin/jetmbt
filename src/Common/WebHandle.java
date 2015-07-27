@@ -11,20 +11,20 @@ import java.util.NoSuchElementException;
  * Created by user on 7/23/15.
  *
  */
-public class Handle {
+public class WebHandle {
     public final URL url;
 
     public final String xpath;
 
     public ElementType eltype;
 
-    public Handle(URL url, String xpath, ElementType eltype) {
+    public WebHandle(URL url, String xpath, ElementType eltype) {
         this.url = url;
         this.xpath = xpath;
         this.eltype = eltype;
     }
 
-    public Handle(URL url, String xpath) {
+    public WebHandle(URL url, String xpath) {
         this.url = url;
         this.xpath = xpath;
         this.eltype = ElementType.unknown;
@@ -33,7 +33,7 @@ public class Handle {
     /**
      * Theoretically we are not stricted in using any concrete
      * identification mechanism.. This choice, imho, should be
-     * localized in Handle. So Handle.findElement performs
+     * localized in WebHandle. So WebHandle.findElement performs
      * WebDriver's findElement by preferred method.
      * @return WebElement ready to perform actions
      */

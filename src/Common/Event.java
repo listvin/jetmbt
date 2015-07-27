@@ -4,25 +4,27 @@ import org.openqa.selenium.WebDriver;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Box for determining an element (by it's Handle) and what exactly to do with it. Aka node in EFG.
+ * Box for determining an element (by it's WebHandle) and what exactly to do with it. Aka node in EFG.
  * Created by user on 7/23/15.
  */
-public class Event {
-    /**To do smth with element we have to find it. Handle helps to find=)*/
-    public final Handle handle;
+public class Event{
+    /**To do smth with element we have to find it. WebHandle helps to find=)*/
+    public final WebHandle handle;
     /**If element is writable, this string contains, what we are going to type in.*/
     public final String context;
 
     /**Constructor for events with non-writable elements.*/
-    public Event(Handle handle){
+    public Event(WebHandle handle){
         this.handle = handle;
         context = "";
     }
 
     /**Constructor for events with writable elements.*/
-    public Event(Handle handle, String context) {
+    public Event(WebHandle handle, String context) {
         this.handle = handle;
         this.context = context;
     }
@@ -30,11 +32,24 @@ public class Event {
     /**Factory method for convenient creating of fake element.*/
     public static Event createFakeTerminal(){
         try{
-            return new Event(new Handle(new URL(""),"",ElementType.terminal));
+            return new Event(new WebHandle(new URL(""),"",ElementType.terminal));
         }catch (MalformedURLException ignored){
             //Empty URL can't be malformed.. I think..
             return null;
         }
+    }
+
+    /**
+     * @param list handles to operate with in Event-s
+     * @return List of Event-s, consisting of operations with web-elements
+     * specified by handles. E.g. "click" or "write abacaba"
+     */
+    public static List<Event> generateTestEvents(List<WebHandle> list){
+        //TODO here parameters of generated events can be specified
+        //TODO writeable are determined as clickables for a while
+        List <Event> result = new ArrayList<Event>();
+        for (WebHandle handle : list) result.add(new Event(handle));
+        return result;
     }
 
     /**Performs event in specified WebDriver
