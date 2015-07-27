@@ -18,19 +18,19 @@ public class Builder {
     public static void main(String [] arg_url) throws MalformedURLException{
         assert arg_url.length == 1 : "one argument expected - URL, to start building from";
         driver.get(arg_url[0]);
-        dfs(Event.createFakeTerminal(), new State(new URL(arg_url[0]), new Sequence()), 0);
+        //dfs(Event.createFakeTerminal(), new State(new URL(arg_url[0]), new Sequence()), 0);
         g.dump2dot("dump");
     }
 
-    static final int depthLimit = 20;
-    private static void dfs(Event prev, State cur, int depth){
-        g.addEdges(prev, scanner.scan(cur));
-        if (depth < depthLimit)
-            while (true){
-                Event next = g.pickEventToGoFrom(prev);
-                if (next != null)
-                    dfs(next, cur.createAppended(next), depth+1);
-                else break;
-            }
-    }
+//    static final int depthLimit = 20;
+//    private static void dfs(Event prev, State cur, int depth){
+//        g.addEdges(prev, scanner.scan(cur));
+//        if (depth < depthLimit)
+//            while (true){
+//                Event next = g.pickEventToGoFrom(prev);
+//                if (next != null)
+//                    dfs(next, cur.createAppended(next), depth+1);
+//                else break;
+//            }
+//    }
 }
