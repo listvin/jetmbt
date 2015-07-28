@@ -93,7 +93,6 @@ public class EFG {
      * @return Filename in case of success, null otherwise
      */
     public String dump2dot(){
-        System.out.print("\u001B[32;1m" + "Bold " + "\u001B[0m");
         String name = (new SimpleDateFormat("EEE_ddMMMyyyy_HH:mm:ss.SSS_")).format(new Date()).toLowerCase() + "at_my_clock";
         if(dump2dot(name)) {
             System.out.print("\u001B[32;1m\"" + name + ".gv\"\u001B[0m\u001B[32m have been wrote to graphs folder.\n" + "\u001B[0m");
@@ -112,13 +111,13 @@ public class EFG {
         try {
             PrintWriter writer = new PrintWriter("graphs/" + name + ".gv", "UTF-8");
             writer.println("digraph EFG {");
-            writer.printf("\t//first nodes");
+            writer.printf("\t//first nodes\n");
             for (Event node : adjList.keySet())
-                writer.printf("\t\tN%d [label=\"%s\"];", node.hashCode(), node.handle.xpath);
-            writer.printf("\t//now edges");
+                writer.printf("\t\tN%d [label=\"%s\"];\n", node.hashCode(), node.handle.xpath);
+            writer.printf("\t//now edges\n");
             for (Event node : adjList.keySet())
                 for (Edge edge : adjList.get(node))
-                    writer.printf("\t\tN%d -> N%d;", node.hashCode(), edge.destination.hashCode());
+                    writer.printf("\t\tN%d -> N%d;\n", node.hashCode(), edge.destination.hashCode());
             writer.println("}");
             writer.close();
             return true;
