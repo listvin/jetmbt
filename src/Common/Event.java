@@ -32,7 +32,7 @@ public class Event{
     /**Factory method for convenient creating of fake element.*/
     public static Event createFakeTerminal(){
         try{
-            return new Event(new WebHandle(new URL(""),"",ElementType.terminal));
+            return new Event(new WebHandle(new URL("http://localhost:8080"),"",ElementType.terminal)); //#hardcode
         }catch (MalformedURLException ignored){
             //Empty URL can't be malformed.. I think..
             return null;
