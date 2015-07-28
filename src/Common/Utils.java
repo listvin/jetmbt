@@ -20,6 +20,14 @@ import java.security.NoSuchAlgorithmException;
  */
 public class Utils {
 
+    public static void sleep(long millis){
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      *
      * @param image - image to be converted to grayscale
