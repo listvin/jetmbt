@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -88,6 +89,20 @@ public class EFG {
     }
 
     /**
+     * This generates .gv file named by current date and time with stored EFG in DOT format.
+     * @return Filename in case of success, null otherwise
+     */
+    public String dump2dot(){
+        System.out.print("\u001B[32;1m" + "Bold " + "\u001B[0m");
+        String name = (new SimpleDateFormat("EEE_ddMMMyyyy_HH:mm:ss.SSS_")).format(new Date()).toLowerCase() + "at_my_clock";
+        if(dump2dot(name)) {
+            System.out.print("\u001B[32;1m\"" + name + ".gv\"\u001B[0m\u001B[32m have been wrote to graphs folder.\n" + "\u001B[0m");
+            return name+".gv";
+        } else
+            return null;
+    }
+
+    /**
      * This generates .gv file with currently stored EFG in DOT format. Overwrites files.
      * @param name Can be specified.
      * @return True in case of success.
@@ -95,7 +110,7 @@ public class EFG {
     public boolean dump2dot(String name){
         //TODO make it more readable
         try {
-            PrintWriter writer = new PrintWriter(name + ".gv", "UTF-8");
+            PrintWriter writer = new PrintWriter("graphs/" + name + ".gv", "UTF-8");
             writer.println("digraph EFG {");
             writer.printf("\t//first nodes");
             for (Event node : adjList.keySet())
