@@ -1,5 +1,6 @@
 package Common;
 
+import com.google.common.primitives.UnsignedInteger;
 import org.openqa.selenium.WebDriver;
 
 import java.net.MalformedURLException;
@@ -12,6 +13,7 @@ import java.util.List;
  * Created by user on 7/23/15.
  */
 public class Event{
+    private final int hash; //should be stored until all affecting values (context and handle) are final
     /**To do smth with element we have to find it. WebHandle helps to find=)*/
     public final WebHandle handle;
     /**If element is writable, this string contains, what we are going to type in.*/
@@ -21,12 +23,14 @@ public class Event{
     public Event(WebHandle handle){
         this.handle = handle;
         context = "";
+        hash = handle.hashCode();
     }
 
     /**Constructor for events with writable elements.*/
     public Event(WebHandle handle, String context) {
         this.handle = handle;
         this.context = context;
+        hash = handle.hashCode() + Utils.hashString(context)*239;
     }
 
     /**Factory method for convenient creating of fake element.*/
@@ -63,4 +67,7 @@ public class Event{
             default: assert false : "this shouldn't have happened"; break;
         }
     }
+
+    @Override
+    public int hashCode(){ return hash; }
 }

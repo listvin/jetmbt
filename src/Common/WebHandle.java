@@ -8,27 +8,32 @@ import java.net.URL;
 import java.util.NoSuchElementException;
 
 /**
+ * Class expected to provide possibility of absolute
+ * identification of any element given in the web.
+ * .hashCode overrided to return the same value
+ * for different instances pointing to the same element.
  * Created by user on 7/23/15.
- *
  */
 public class WebHandle {
     public final URL url;
-
     public final String xpath;
+    private final int hash;
 
-    public ElementType eltype;
-
-    public WebHandle(URL url, String xpath, ElementType eltype) {
-        this.url = url;
-        this.xpath = xpath;
-        this.eltype = eltype;
-    }
+    public ElementType eltype = ElementType.unknown;
 
     public WebHandle(URL url, String xpath) {
         this.url = url;
         this.xpath = xpath;
-        this.eltype = ElementType.unknown;
+        this.hash = Utils.hashString(url.toString() + xpath);
     }
+
+    public WebHandle(URL url, String xpath, ElementType eltype) {
+        this(url, xpath);
+        this.eltype = eltype;
+    }
+
+    @Override
+    public int hashCode(){ return hash; }
 
     /**
      * Theoretically we are not stricted in using any concrete
