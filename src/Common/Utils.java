@@ -29,6 +29,29 @@ public class Utils {
     }
 
     /**
+     * Method to calculate a polynomial hash of given string:
+     * hashString(s)  =  s[0]
+     *                +  s[1]*base
+     *                +  s[2]*base^2
+     *                +  s[3]*base^3
+     *                +  ...
+     *                +  s[s.size()-1]*base^(s.size()-1)
+     * As you can see above overflow is used instead of taking modulo...
+     * Base here is 257.
+     * @param s string for hashing
+     * @return returned int is ok to override native .hsahCode()
+     */
+    public static int hashString(String s){
+        final int base = 257;
+        int powed = 1, result = 0;
+        for (Character c : s.toCharArray()) {
+            result += c*powed;
+            powed *= base;
+        }
+        return result;
+    }
+
+    /**
      *
      * @param image - image to be converted to grayscale
      */
