@@ -1,6 +1,7 @@
 import Common.*;
 
 import java.net.URL;
+import java.sql.SQLException;
 
 /**
  * Interface for database able to cache tested web elements
@@ -8,6 +9,8 @@ import java.net.URL;
  * Created by listvin on 7/27/15.
  */
 public interface Alphabet {
+
+
     class HandleTypePredefinedException extends Exception{
         public HandleTypePredefinedException(){ super(); }
     }
@@ -26,7 +29,7 @@ public interface Alphabet {
      * @throws HandleTypePredefinedException in case eltype field is already
      * set to smth not equal to unknown.
      */
-    default WebHandle request(WebHandle handle) throws HandleTypePredefinedException {
+    default WebHandle request(WebHandle handle) throws HandleTypePredefinedException, SQLException {
         if (handle.eltype != ElementType.unknown) throw new HandleTypePredefinedException();
         ElementType eltype = request(handle.url, handle.xpath);
         if (eltype != ElementType.unknown)
@@ -41,13 +44,13 @@ public interface Alphabet {
      * @param xpath - Xpath to search for
      * @return ElementType.unknown if not cached, otherwise - cached value.
      */
-    ElementType request(URL url, String xpath);
+    ElementType request(URL url, String xpath) throws SQLException;
 
     /**
      * Method for caching new testing results
      * @param handle - eltype field should be properly set
      */
-    default void add(WebHandle handle) throws ConflictingHandleStored{
+    default void add(WebHandle handle) throws ConflictingHandleStored, SQLException {
         add(handle.url, handle.xpath, handle.eltype);
     }
 
@@ -57,5 +60,5 @@ public interface Alphabet {
      * @param xpath - Xpath also not verified
      * @param eltype - value to cache.
      */
-    void add(URL url, String xpath, ElementType eltype) throws ConflictingHandleStored;
+    void add(URL url, String xpath, ElementType eltype) throws ConflictingHandleStored, SQLException;
 }

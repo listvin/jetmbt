@@ -42,6 +42,9 @@ read -e -p "Invoke default table partition? [y/n] " -i "n" initdb
 
 if [ "$initdb" = "y" ]; then
   sudo -u postgres -H -- psql -d $ALPHABETDB -a -f initDB.sql
+  #что делать с ковычками?
+
+  sudo -u postgres -H -- psql -U postgres -d $ALPHABETDB -c 'ALTER DATABASE alphabet OWNER TO jetmbt;'
   echo
 fi
 
