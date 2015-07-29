@@ -62,4 +62,6 @@ public interface Alphabet {
      * @param eltype - value to cache.
      */
     void add(URL url, String xpath, ElementType eltype) throws ConflictingHandleStored, SQLException;
+
+    void close();
 }

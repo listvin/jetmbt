@@ -8,6 +8,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +67,12 @@ public class Scanner {
             }
 
             //###### Checking for cached result
-            ElementType cachedEltype = alphabet.request(handle.url, handle.xpath);
+            ElementType cachedEltype = null;
+            try {
+                cachedEltype = alphabet.request(handle.url, handle.xpath);
+            } catch (SQLException e) {
+                e.printStackTrace(System.err);
+            }
             if (cachedEltype != ElementType.unknown)
                 return cachedEltype;
 

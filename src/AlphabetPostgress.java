@@ -1,9 +1,7 @@
 
 import Common.ElementType;
-import Common.WebHandle;
-import com.sun.jna.platform.win32.WinNT;
+import Boxes.WebHandle;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,14 +13,14 @@ import java.util.List;
 /**
  * Created by user on 7/29/15.
  */
-public class AlphabetImpl implements Alphabet {
+public class AlphabetPostgress implements Alphabet {
     private static String CONFIG = "DB.properties";
     private Connection c;
 
     /**
      * Класс для работы с дазой банных
      */
-    public AlphabetImpl(){
+    public AlphabetPostgress(){
         Properties defaultProps = new Properties();
         String DBNAME = null;
         String DBUSER = null;
@@ -136,7 +134,7 @@ public class AlphabetImpl implements Alphabet {
         return ElementType.unknown;
     }
     public static void main(String args[]) throws MalformedURLException, SQLException {
-        AlphabetImpl alphabet = new AlphabetImpl();
+        AlphabetPostgress alphabet = new AlphabetPostgress();
         WebHandle handle = new WebHandle(new URL("http://vk.com"), "//html[1]", ElementType.clickable);
         try {
             alphabet.add(handle);
