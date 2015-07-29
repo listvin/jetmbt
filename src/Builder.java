@@ -1,11 +1,10 @@
-import Common.*;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
+import Boxes.EFG;
+import Boxes.Event;
+import Boxes.Sequence;
+import Boxes.State;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 /**
  * Separate class for building EFG.
@@ -27,17 +26,20 @@ public class Builder {
 
         dfs(Event.createFakeTerminal(), new State(new URL(arg_url[0]), new Sequence()), 0);
 
-        g.dump2dot("dump");
+        g.dump2dot();
     }
 
-    static final int depthLimit = 20;
+    static final int depthLimit = 20; //#hardcode
     private static void dfs(Event prev, State cur, int depth){
+        System.out.print("DFS:"); for (int i = 0; i < depth; ++i) System.out.printf("_%2d_", i); System.out.printf("Last event: %s | %s\n", prev.handle.url, prev.handle.xpath);
         g.addEdges(prev, Event.generateTestEvents(scanner.scan(cur)));
         if (depth < depthLimit)
             while (true){
                 Event next = g.pickEventToGoFrom(prev);
-                if (next != null)
-                    dfs(next, cur.createAppended(next), depth+1);
+                if (next != null) {
+                    g.dump2dot();
+                    dfs(next, cur.createAppended(next), depth + 1);
+                }
                 else break;
             }
     }
