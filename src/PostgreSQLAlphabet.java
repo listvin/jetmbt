@@ -11,16 +11,14 @@ import java.sql.*;
 import java.util.*;
 import java.util.List;
 /**
- * Created by user on 7/29/15.
+ * Class for storing ElementTypes of corresponding WebElements in PostqreSQL db
+ * Created by wimag on 7/29/15.
  */
-public class AlphabetPostgress implements Alphabet {
+public class PostgreSQLAlphabet implements Alphabet {
     private static String CONFIG = "DB.properties";
     private Connection c;
 
-    /**
-     * Класс для работы с дазой банных
-     */
-    public AlphabetPostgress(){
+    public PostgreSQLAlphabet(){
         Properties defaultProps = new Properties();
         String DBNAME = null;
         String DBUSER = null;
@@ -47,7 +45,6 @@ public class AlphabetPostgress implements Alphabet {
         }
         System.out.println("Opened database successfully");
     }
-
 
     /**
      *
@@ -82,6 +79,7 @@ public class AlphabetPostgress implements Alphabet {
     }
 
     public void add(URL url, String xpath, ElementType eltype) throws SQLException, ConflictingHandleStored {
+        //TODO remove this copypaste
         Statement stmt = c.createStatement();
         //SQL
 
@@ -92,7 +90,7 @@ public class AlphabetPostgress implements Alphabet {
                     "VALUES ('" + url + "','" + xpath + "','" + eltype.name() + "')");
         }else{
             rs.next();
-            if(rs.getString("eltype").equals(eltype.name())){
+            if(!rs.getString("eltype").equals(eltype.name())){
                 throw new ConflictingHandleStored();
             }
         }
@@ -133,8 +131,10 @@ public class AlphabetPostgress implements Alphabet {
         stmt.close();
         return ElementType.unknown;
     }
+
+    //for testing purposes only
     public static void main(String args[]) throws MalformedURLException, SQLException {
-        AlphabetPostgress alphabet = new AlphabetPostgress();
+        PostgreSQLAlphabet alphabet = new PostgreSQLAlphabet();
         WebHandle handle = new WebHandle(new URL("http://vk.com"), "//html[1]", ElementType.clickable);
         try {
             alphabet.add(handle);
