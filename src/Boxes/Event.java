@@ -1,6 +1,7 @@
-package Common;
+package Boxes;
 
-import com.google.common.primitives.UnsignedInteger;
+import Common.ElementType;
+import Common.Utils;
 import org.openqa.selenium.WebDriver;
 
 import java.net.MalformedURLException;
@@ -10,6 +11,7 @@ import java.util.List;
 
 /**
  * Box for determining an element (by it's WebHandle) and what exactly to do with it. Aka node in EFG.
+ * .equals(obj) and .hashCode() are overrided
  * Created by user on 7/23/15.
  */
 public class Event{
@@ -36,7 +38,7 @@ public class Event{
     /**Factory method for convenient creating of fake element.*/
     public static Event createFakeTerminal(){
         try{
-            return new Event(new WebHandle(new URL("http://localhost:8080"),"",ElementType.terminal)); //#hardcode
+            return new Event(new WebHandle(new URL("http://localhost:8080"),"BUILDINGROOT", ElementType.terminal)); //#hardcode
         }catch (MalformedURLException ignored){
             //Empty URL can't be malformed.. I think..
             return null;
@@ -70,4 +72,10 @@ public class Event{
 
     @Override
     public int hashCode(){ return hash; }
+    @Override
+    public boolean equals(Object obj){
+        return obj instanceof Event
+                && context.equals(((Event)obj).context)
+                && handle.equals(((Event)obj).handle);
+    }
 }

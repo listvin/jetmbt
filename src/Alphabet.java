@@ -1,3 +1,4 @@
+import Boxes.WebHandle;
 import Common.*;
 
 import java.net.URL;

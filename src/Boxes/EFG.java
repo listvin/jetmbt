@@ -1,9 +1,8 @@
-package Common;
+package Boxes;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import Common.GraphDumper;
+
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -14,34 +13,7 @@ import java.util.*;
  * Created by listvin on 7/23/15.
  */
 public class EFG {
-    private int edgeTickValue = 1;
-    /** This invalidates all tick-marks on all edges.*/
-    public void invalidateTicks(){ ++edgeTickValue; }
-
-    private class Edge {
-        public final Event destination;
-        private int tick0 = 0, tick1 = 0;
-
-        /**@param destination This is target node.*/
-        private Edge(Event destination) {
-            this.destination = destination;
-        }
-
-        boolean isTicked(){ return (tick0 == edgeTickValue);}
-        boolean isTickedTwice(){ return (isTicked() && tick1 == edgeTickValue);}
-        int getTicksCount(){ return (isTicked() ? (isTickedTwice() ? 2 : 1) : 0); }
-        void setTicked(){
-            if (isTicked())
-                tick1 = edgeTickValue;
-            else
-                tick0 = edgeTickValue;
-        }
-    }
-    private class EdgeList extends ArrayList<Edge>{
-        int countOfUnexplored = 0;
-        EdgeList(){ super(); }
-    }
-
+    private GraphDumper dumper = new GraphDumper();
     private Random random = new Random(239);
     private Map<Event, EdgeList> adjList = new HashMap<>();
 
@@ -90,36 +62,17 @@ public class EFG {
 
     /**
      * This generates .gv file named by current date and time with stored EFG in DOT format.
-     * @return Filename in case of success, null otherwise
+     * @return true in case of success
      */
-    public String dump2dot(){
-        String name = (new SimpleDateFormat("EEE_ddMMMyyyy_HH:mm:ss.SSS_")).format(new Date()).toLowerCase() + "at_my_clock";
-        if(dump2dot(name)) {
-            System.out.print("\u001B[32;1m\"" + name + ".gv\"\u001B[0m\u001B[32m have been wrote to graphs folder.\n" + "\u001B[0m");
-            return name+".gv";
-        } else
-            return null;
-    }
-
-    /**
-     * This generates .gv file with currently stored EFG in DOT format. Overwrites files.
-     * @param name Can be specified.
-     * @return True in case of success.
-     */
-    public boolean dump2dot(String name){
+    public boolean dump2dot(){
         //TODO make it more readable
         try {
-            PrintWriter writer = new PrintWriter("graphs/" + name + ".gv", "UTF-8");
-            writer.println("digraph EFG {");
-            writer.printf("\t//first nodes\n");
-            for (Event node : adjList.keySet())
-                writer.printf("\t\tN%d [label=\"%s\"];\n", node.hashCode(), node.handle.xpath);
-            writer.printf("\t//now edges\n");
+            dumper.initFile();
+            for (Event node : adjList.keySet()) dumper.addNode(node);
             for (Event node : adjList.keySet())
                 for (Edge edge : adjList.get(node))
-                    writer.printf("\t\tN%d -> N%d;\n", node.hashCode(), edge.destination.hashCode());
-            writer.println("}");
-            writer.close();
+                    dumper.addEdgeFromTo(node, edge.destination);
+            System.out.print("\u001B[32;1m\"" + dumper.closeFile() + ".gv\"\u001B[0m\u001B[32m have been wrote to graphs folder.\n" + "\u001B[0m");
             return true;
         } catch (Exception e){
             e.printStackTrace(System.err);

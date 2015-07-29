@@ -1,4 +1,4 @@
-package Common;
+package Boxes;
 
 import org.openqa.selenium.WebDriver;
 
