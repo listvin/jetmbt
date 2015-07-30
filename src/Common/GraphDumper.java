@@ -10,6 +10,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
+ * Class for convenient writing of EFG to viewable files.
+ * 350% of GraphViz Java API functionality, lol
  * Created by listvin on 7/29/15.
  */
 public class GraphDumper {
@@ -29,7 +31,6 @@ public class GraphDumper {
     private Map<String, String> colorMap = new HashMap<>();
     private final String[] colorList = {
             "fillcolor=black fontcolor=white",
-            "fillcolor=white fontcolor=black",
             "fillcolor=firebrick1 fontcolor=black",
             "fillcolor=chocolate1 fontcolor=black",
             "fillcolor=yellow fontcolor=black",
@@ -54,6 +55,7 @@ public class GraphDumper {
             "fillcolor=brown fontcolor=white",
             "fillcolor=aliceblue fontcolor=black",
             "fillcolor=burlywood1 fontcolor=black",
+            "fillcolor=white fontcolor=black",
     };
 
     private PrintWriter writer = null;
