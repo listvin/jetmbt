@@ -14,7 +14,7 @@ import java.util.List;
  * .equals(obj) and .hashCode() are overrided
  * Created by user on 7/23/15.
  */
-public class Event{
+public class Event extends Tickable{
     private final int hash; //should be stored until all affecting values (context and handle) are final
     /**To do smth with element we have to find it. WebHandle helps to find=)*/
     public final WebHandle handle;

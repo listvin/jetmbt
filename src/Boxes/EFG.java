@@ -2,12 +2,10 @@ package Boxes;
 
 import Common.GraphDumper;
 
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * This is implemntation of holder for event flow graph.
+ * This is implemntation of a holder for event flow graph.
  * It controls duplicating of nodes (Event-s) but doesn't control
  * duplicating of edges coming from the node, be careful with this.
  * Created by listvin on 7/23/15.
@@ -27,41 +25,46 @@ public class EFG {
         if (!adjList.containsKey(destination))
             adjList.put(destination, new EdgeList());
         //2. Adding edge to the certain list of outgoing paths
-        ++edgeList.countOfUnexplored;
         edgeList.add(new Edge(destination));
     }
 
     /**
      * Should be used (typically after scanning) to add edges in batch. See {@link #addEdge(EdgeList, Event)} to add one edge.
      * @param source All adding edges come out from this Event-node. Being add
-     * @param destList This is list of destination events to add edges to.
+     * @param destList This is list of destination events to add edges to. ArrayList recommended. Will be shuffled!
      */
     public void addEdges(Event source, List <Event> destList){
         if (!adjList.containsKey(source))
             adjList.put(source, new EdgeList());
+        //So, shuffling. Here it is.
+            Collections.shuffle(destList);
         for (Event destination : destList) addEdge(adjList.get(source), destination);
     }
 
     /**
-     * This performs random choice of next node in graph to go from source among unticked edges only.
+     * This performs choice of next node in graph to go from source among unticked edges only.
+     * Also unticked edge should lead to unticked node.
      * @param source Event to determinate the beginning of set of edges to select from.
-     * @return If there are some unexplored edges outgoing from source, this returns it, and marks as explored.
+     * @return If there are some described edges, returns one and sets it as explored. Null otherwise.
      */
     public Event pickEventToGoFrom(Event source){
-        //TODO: optimize selection of random edge
         EdgeList list = adjList.get(source);
-        if (list.countOfUnexplored == 0) return null;
-        int num = Math.abs(random.nextInt() % list.size());
-        while (list.get(num).isTicked())
-            num = num+1 == list.size() ? 0 : num+1;
+        while (list.get(list.firstToExplore).destination.isTicked()
+                && list.firstToExplore < list.size())
+            ++list.firstToExplore;
+        if (list.firstToExplore == list.size()) return null;
+        assert !list.get(list.firstToExplore).isTicked() : "Smth goes wrong when choosing picking next event for dfs";
+        //Setting destination event as explored
+            list.get(list.firstToExplore).destination.setTicked();
         //Setting here edge as explored in Edge itself and in EdgeList counter
-        list.get(num).setTicked();
-        --list.countOfUnexplored;
-        return list.get(num).destination;
+            list.get(list.firstToExplore).setTicked();
+            //at the moment dfs does this: list.get(list.firstToExplore).destination.setTicked(); //marking destination node
+        return list.get(list.firstToExplore++).destination; //++ here is extremely important =/
     }
 
     /**
      * This generates .gv file named by current date and time with stored EFG in DOT format.
+     * Connected GraphDumper supposed to generate svg automatically
      * @return true in case of success
      */
     public boolean dump2dot(){
