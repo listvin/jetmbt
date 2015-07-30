@@ -14,11 +14,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by user on 7/23/15.
+ * Created by wimag on 7/23/15.
  */
 public class Scanner {
     private WebDriver driver;
     private Alphabet alphabet;
+    private Alphabet alphabet_testing;
 
     /** Constructs Scanner by creating a Firefox (at the moment) driver and logging at "http://localhost:8080/login" with root/root*/
     public Scanner(){
@@ -28,8 +29,9 @@ public class Scanner {
         driver.manage().timeouts().setScriptTimeout(2, TimeUnit.SECONDS);
 
         alphabet = new MapAlphabet();
+        alphabet_testing = new PostgreSQLAlphabet();
 
-        //TODO ACHTUNG THIS (hardcoded login) SHOULD NOT EXIST!!!!
+        //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
         driver.get("http://localhost:8080/login"); //#hardcode
         System.err.printf("Have logged in with root/root at\n\tlocalhost:8080/login\n");
 
@@ -61,20 +63,11 @@ public class Scanner {
                     System.err.println("=======================TRYING TO SLEEP NOW=======================");
                     Utils.sleep(1000);
                 }while(!driver.getCurrentUrl().equals(handle.url.toString()));
+            }
+            //Supposed to used this instead in the future:
 //                if (!driver.getCurrentUrl().equals(handle.url.toString())){
 //                    throw new WebDriverException("URL opened in browser is not corresponding to URL in WebHandle");
 //                }
-            }
-
-            //###### Checking for cached result
-            ElementType cachedEltype = null;
-            try {
-                cachedEltype = alphabet.request(handle.url, handle.xpath);
-            } catch (SQLException e) {
-                e.printStackTrace(System.err);
-            }
-            if (cachedEltype != ElementType.unknown)
-                return cachedEltype;
 
             //###### Storing data before tries to interact
             String oldHash = Utils.hashPage(driver);
@@ -202,7 +195,33 @@ public class Scanner {
             baseState.reach(driver);
 //            System.err.println("XPATH for element being tested: " + handle.xpath);
             try {
-                handle.eltype = checkHandleType(driver, handle);
+                //###### Checking for cached result
+                ElementType cachedEltype = null;
+                //TODO remove "stress" testing of SQL
+                /**/    try {
+                /**/        cachedEltype = alphabet_testing.request(handle.url, handle.xpath);
+                /**/    } catch (Exception e) {
+                /**/        System.err.println("PostgreSQLAlphabet failed with: ");
+                /**/        e.printStackTrace(System.err);
+                /**/        System.err.println("    trying to Request deprecated MapAlphabet instead...");
+                /**/        try {
+                /**/            cachedEltype = alphabet.request(handle.url, handle.xpath);
+                /**/        } catch (SQLException ignored) {
+                /**/            ignored.printStackTrace(System.err);
+                /**/        }
+                /**/    }
+                if (cachedEltype != ElementType.unknown)
+                    handle.eltype = cachedEltype;
+                else {
+                    handle.eltype = checkHandleType(driver, handle);
+                /**/        try {
+                /**/         alphabet.add(handle);
+                /**/        alphabet_testing.add(handle);
+                /**/        } catch (Exception e) {
+                /**/           System.err.println("One of the Alphabet's failed with: ");
+                /**/          e.printStackTrace(System.err);
+                /**/        }
+                }
             }catch (NoSuchElementException e){
                 //TODO: after hovering over button tooltip appears changing page structure(Extra div) => couldn't handle element.
                 continue;
