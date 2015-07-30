@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by listvin on 7/29/15.
@@ -64,7 +62,39 @@ public class GraphDumper {
         String name = generateName();
         writer = new PrintWriter("graphs/" + name + ".gv", "UTF-8");
         writer.printf("digraph EFG {\n" +
-                      "\tnode [style=filled]\n");
+                "\tnode [style=filled]\n");
+
+        int i = 0;
+        for(String url : orderedUrls)
+            addInfoNode(++i, url, url, colorMap.get(url));
+    }
+
+    //TODO this should be improved
+    private List<String> orderedUrls = new ArrayList<>();
+    private int lastNum = -1;
+    public void addInfoNode(Integer num, String url, String label, String color){
+        //writing info-node entry
+        writer.printf("\tInfo%d [\n", num);
+
+        //shaping node, corresponding to the fact it is InfoNode
+        writer.printf("\t\tshape=%s\n", "note");
+
+        //writing node's label
+        if (label != null) writer.printf("\t\tlabel=\"%s\"\n", label);
+
+        //writing node's url
+        if (url != null) writer.printf("\t\tURL=\"%s\"\n", url);
+
+        //painting node with color, corresponding to URL
+        writer.printf("\t\t%s\n", color);
+
+        //closing node definition
+        writer.printf("\t];\n");
+
+        //drawing edge to previous info node
+        if (lastNum != -1)
+            writer.printf("\tInfo%d -> Info%d;\n", lastNum, num);
+        lastNum = num;
     }
 
     private Map<Event, Integer> nodeID = new HashMap<>();
@@ -81,8 +111,10 @@ public class GraphDumper {
                       "\t\tURL=\"%s\"\n", node.handle.xpath, node.handle.url.toString());
 
         //checking if we have a color assigned to event's url
-        if (!colorMap.containsKey(node.handle.url.toString()))
+        if (!colorMap.containsKey(node.handle.url.toString())) {
+            orderedUrls.add(node.handle.url.toString());
             colorMap.put(node.handle.url.toString(), colorList[colorMap.size() % colorList.length]);
+        }
 
         //painting node with color, corresponding to URL
         writer.printf("\t\t%s\n", colorMap.get(node.handle.url.toString()));
@@ -97,7 +129,7 @@ public class GraphDumper {
         }
 
         //closing node definition
-        writer.printf("\t\t];\n");
+        writer.printf("\t];\n");
     }
 
     public void addEdgeFromTo(Event source, Event destination){
@@ -110,7 +142,8 @@ public class GraphDumper {
         writer.close();
         writer = null;
         String name = recoverLastName();
-        runtime.exec("dot -Tsvg \"graphs/" + name + ".gv\" -o \"graphs/" + name + ".svg\"");
+        String[] args = {"dot", "-Tsvg", "graphs/" + name + ".gv", "-o", "graphs/" + name + ".svg"}; //#hardcode
+        runtime.exec(args); //we don't need .waitFor() in our case, do we?
         return name;
     }
 }
