@@ -11,7 +11,6 @@ import java.util.Map;
  */
 public class MapAlphabet implements Alphabet{
     private Map<String, ElementType> map = new HashMap<>();
-
     private String crutch(URL url, String xpath){
         return url.toString() + "|" + xpath;
     }
@@ -26,5 +25,10 @@ public class MapAlphabet implements Alphabet{
         ElementType temp = map.get(id);
         if (temp == null) map.put(id, eltype);
         else if (temp != eltype) throw new ConflictingHandleStored();
+    }
+
+    @Override
+    public void close() {
+        //TODO add storage in simple csv
     }
 }

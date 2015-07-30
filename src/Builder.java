@@ -30,7 +30,11 @@ public class Builder {
     }
 
     static final int depthLimit = 20; //#hardcode
+    /**
+     * @param prev - this called "prev" because in browser this event was already performed. For simple dfs 
+     */
     private static void dfs(Event prev, State cur, int depth){
+        prev.setTicked(); //for now let's make it classic, with touring by nodes instead of edges.
         System.out.print("DFS:"); for (int i = 0; i < depth; ++i) System.out.printf("_%2d_", i); System.out.printf("Last event: %s | %s\n", prev.handle.url, prev.handle.xpath);
         g.addEdges(prev, Event.generateTestEvents(scanner.scan(cur)));
         if (depth < depthLimit)
