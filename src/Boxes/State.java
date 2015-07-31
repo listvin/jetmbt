@@ -9,8 +9,8 @@ import java.net.URL;
  * Created by user on 7/23/15.
  */
 public class State {
-    public final URL url;
-    public final Sequence sequence;
+    public URL url;
+    public Sequence sequence;
 
     /**Makes state based on copy of sent sequence.*/
     public State(URL url, Sequence sequence){
@@ -39,5 +39,10 @@ public class State {
             Thread.currentThread().interrupt();
         }
         sequence.play(driver);
+    }
+
+    public void truncToURL(URL url){
+        this.url = url;
+        this.sequence = new Sequence();
     }
 }

@@ -11,6 +11,7 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,7 +21,7 @@ public class Scanner {
     private WebDriver driver;
     private Alphabet alphabet;
     private Alphabet alphabet_testing;
-
+    private BlockingQueue<URL> URLQueue = null;
     /** Constructs Scanner by creating a Firefox (at the moment) driver and logging at "http://localhost:8080/login" with root/root*/
     public Scanner(){
         driver = new FirefoxDriver();
@@ -40,6 +41,10 @@ public class Scanner {
         driver.findElement(By.id("id_l.L.loginButton")).click();
     }
 
+    public Scanner(BlockingQueue<URL> queue){
+        this();
+        URLQueue = queue;
+    }
     /** Terminates assigned driver*/
     public void close(){
         driver.quit();
@@ -178,11 +183,27 @@ public class Scanner {
         URL curUrl = null;
         try {
             curUrl = new URL(driver.getCurrentUrl());
+
         } catch (MalformedURLException e) {
             //This MalformedURLException is rather annoying.
             //Why at all we still use the URL class...
             e.printStackTrace();
         }
+        if(URLQueue != null){
+            URLQueue.add(curUrl);
+            //attempt to trnuc sequence
+            String oldHash = Utils.hashPage(driver);
+            try {
+                List<String> knownHashes = alphabet.getHashesByURL(curUrl);
+                if(!knownHashes.isEmpty() && knownHashes.contains(oldHash)){
+                    baseState.truncToURL(curUrl);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+
         for(WebElement element: elementList){
             if(!element.isDisplayed() || !element.isEnabled()) continue;
             String xpath = Selectors.formXPATH(driver, element);

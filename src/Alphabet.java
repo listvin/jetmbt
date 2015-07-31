@@ -1,8 +1,10 @@
 import Boxes.WebHandle;
 import Common.*;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * Interface for database able to cache tested web elements
@@ -64,4 +66,28 @@ public interface Alphabet {
     void add(URL url, String xpath, ElementType eltype) throws ConflictingHandleStored, SQLException;
 
     void close();
+
+
+    /**
+     * Add URL with specified hash, if entry already exists - then do nothing
+     * @param url
+     * @param hash
+     * @throws SQLException
+     */
+    void addURL(URL url, String hash) throws SQLException;
+
+    /**
+     * Returns all hashes of url
+     * @param url
+     * @return - Arraylist of all hashes
+     * @throws SQLException
+     */
+    List<String> getHashesByURL(URL url) throws SQLException;
+
+    /**
+     * Get random URL from encountered.
+     * @return
+     * @throws SQLException
+     */
+    URL getRandomURL() throws SQLException, MalformedURLException;
 }
