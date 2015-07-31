@@ -164,16 +164,20 @@ public class PostgreSQLAlphabet implements Alphabet {
         ResultSet rs = stmt.executeQuery("SELECT * from urls WHERE url = '" + url.toString() +
                 "' AND hash = '" + hash + "'");
         if(!rs.isBeforeFirst()){
-            stmt.executeUpdate("INSERT INTO urls (url, xpath) " +
+            stmt.executeUpdate("INSERT INTO urls (url, hash) " +
                     "VALUES ('" + url.toString() + "','" + hash + "')");
         }
         stmt.close();
     }
 
+    @Nullable
     public URL getRandomURL() throws SQLException, MalformedURLException {
         Statement stmt = c.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT DISTINCT url FROM urls");
         List<String> urls = new ArrayList<>();
+        if(!rs.isBeforeFirst()){
+            return null;
+        }
         while (rs.next()){
             urls.add(rs.getString("url"));
         }

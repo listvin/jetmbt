@@ -25,20 +25,9 @@ public class Scanner {
     /** Constructs Scanner by creating a Firefox (at the moment) driver and logging at "http://localhost:8080/login" with root/root*/
     public Scanner(){
         driver = new FirefoxDriver();
-        driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
-        driver.manage().timeouts().setScriptTimeout(2, TimeUnit.SECONDS);
-
+        Utils.setUpDriver(driver);
         alphabet = new MapAlphabet();
         alphabet_testing = new PostgreSQLAlphabet();
-
-        //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
-        driver.get("http://localhost:8080/login"); //#hardcode
-        System.err.printf("Have logged in with root/root at\n\tlocalhost:8080/login\n");
-
-        driver.findElement(By.id("id_l.L.login")).sendKeys("root");
-        driver.findElement(By.id("id_l.L.password")).sendKeys("root");
-        driver.findElement(By.id("id_l.L.loginButton")).click();
     }
 
     public Scanner(BlockingQueue<URL> queue){
@@ -170,7 +159,8 @@ public class Scanner {
         List<WebHandle> allHandles = new ArrayList<>();
 
         baseState.reach(driver);
-
+        String oldHash = Utils.hashPage(driver);
+        
         List<WebElement> elementList = driver.findElements(By.cssSelector("*"));
         System.err.printf("scan() of Scanner invoked. baseState.\n" +
                         "\t.url : %s\n" +
@@ -192,10 +182,11 @@ public class Scanner {
         if(URLQueue != null){
             URLQueue.add(curUrl);
             //attempt to trnuc sequence
-            String oldHash = Utils.hashPage(driver);
+
             try {
                 List<String> knownHashes = alphabet.getHashesByURL(curUrl);
                 if(!knownHashes.isEmpty() && knownHashes.contains(oldHash)){
+                    System.out.println("Trnucted to url: " + curUrl.toString());
                     baseState.truncToURL(curUrl);
                 }
             } catch (SQLException e) {

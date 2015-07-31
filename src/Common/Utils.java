@@ -1,9 +1,11 @@
 package Common;
 
 import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.By;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -14,6 +16,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by user on 7/24/15.
@@ -104,5 +107,24 @@ public class Utils {
         }
         return hexString;
 
+    }
+
+    /**
+     * perform login and parameter setup un specified driver
+     * @param driver
+     */
+    public static void setUpDriver(WebDriver driver){
+        driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
+        driver.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+        driver.manage().timeouts().setScriptTimeout(2, TimeUnit.SECONDS);
+
+
+        //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
+        driver.get("http://localhost:8080/login"); //#hardcode
+        System.err.printf("Have logged in with root/root at\n\tlocalhost:8080/login\n");
+
+        driver.findElement(By.id("id_l.L.login")).sendKeys("root");
+        driver.findElement(By.id("id_l.L.password")).sendKeys("root");
+        driver.findElement(By.id("id_l.L.loginButton")).click();
     }
 }
