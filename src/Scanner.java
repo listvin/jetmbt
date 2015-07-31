@@ -39,6 +39,10 @@ public class Scanner {
         driver.quit();
     }
 
+
+    public ElementType checElementType(WebDriver driver, WebHandle handle){
+        return checkHandleType(driver, handle, null);
+    }
     /**
      * Determines elementType with given handle in current Webdriver state
      * @param driver
@@ -46,7 +50,7 @@ public class Scanner {
      * @return ElementType. unknown if driver url didnt match handle
      * @throws NoSuchElementException when element cant be found by its xpath
      */
-    public ElementType checkHandleType(WebDriver driver, WebHandle handle) throws NoSuchElementException{
+    public ElementType checkHandleType(WebDriver driver, WebHandle handle, String oldHash) throws NoSuchElementException{
         try {
             //###### Verifying opened url
             //TODO remove this crutch
@@ -64,7 +68,9 @@ public class Scanner {
 //                }
 
             //###### Storing data before tries to interact
-            String oldHash = Utils.hashPage(driver);
+            if(oldHash == null) {
+                oldHash = Utils.hashPage(driver);
+            }
             String oldWindowHandle = driver.getWindowHandle();
             driver.findElement(By.xpath(handle.xpath)).click();
 
@@ -160,7 +166,7 @@ public class Scanner {
 
         baseState.reach(driver);
         String oldHash = Utils.hashPage(driver);
-        
+
         List<WebElement> elementList = driver.findElements(By.cssSelector("*"));
         System.err.printf("scan() of Scanner invoked. baseState.\n" +
                         "\t.url : %s\n" +
@@ -183,15 +189,7 @@ public class Scanner {
             URLQueue.add(curUrl);
             //attempt to trnuc sequence
 
-            try {
-                List<String> knownHashes = alphabet.getHashesByURL(curUrl);
-                if(!knownHashes.isEmpty() && knownHashes.contains(oldHash)){
-                    System.out.println("Trnucted to url: " + curUrl.toString());
-                    baseState.truncToURL(curUrl);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+
         }
 
 
@@ -205,6 +203,18 @@ public class Scanner {
 
         for (WebHandle handle: allHandles){
             baseState.reach(driver);
+            if(URLQueue != null){
+                try {
+                    List<String> knownHashes = new ArrayList<>(alphabet_testing.getHashesByURL(curUrl));
+                    if(!knownHashes.isEmpty() && knownHashes.contains(oldHash)){
+                        System.out.println("Trnucted to url: " + curUrl.toString());
+                        baseState.truncToURL(curUrl);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+            }
 //            System.err.println("XPATH for element being tested: " + handle.xpath);
             try {
                 //###### Checking for cached result
@@ -225,7 +235,8 @@ public class Scanner {
                 if (cachedEltype != ElementType.unknown)
                     handle.eltype = cachedEltype;
                 else {
-                    handle.eltype = checkHandleType(driver, handle);
+                    oldHash = Utils.hashPage(driver);
+                    handle.eltype = checkHandleType(driver, handle, oldHash);
                 /**/        try {
                 /**/         alphabet.add(handle);
                 /**/        alphabet_testing.add(handle);
@@ -233,6 +244,15 @@ public class Scanner {
                 /**/           System.err.println("One of the Alphabet's failed with: ");
                 /**/          e.printStackTrace(System.err);
                 /**/        }
+                    try {
+                        List<String> knownHashes = alphabet_testing.getHashesByURL(curUrl);
+                        if(!knownHashes.isEmpty() && knownHashes.contains(oldHash)){
+                            System.out.println("Trnucted to url: " + curUrl.toString());
+                            baseState.truncToURL(curUrl);
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
             }catch (NoSuchElementException e){
                 //TODO: after hovering over button tooltip appears changing page structure(Extra div) => couldn't handle element.

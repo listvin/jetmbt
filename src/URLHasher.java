@@ -33,7 +33,6 @@ public class URLHasher implements Runnable{
         try {
             while(true){
                 URL url = URLQueue.poll(1000, TimeUnit.MILLISECONDS);
-                driver.get("http://vk.com");
                 if(url != null){
                     driver.get(url.toString());
                     System.out.println("Aquired " + url.toString() + " as a Hash url parameter");
