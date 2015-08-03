@@ -15,7 +15,7 @@ import static Common.Utils.hashPage;
 import static Common.Utils.sleep;
 
 /**
- * Created by user on 7/30/15.
+ * Created by wimag on 7/30/15.
  */
 public class URLHasher implements Runnable{
     protected BlockingQueue<URL> URLQueue = null;
