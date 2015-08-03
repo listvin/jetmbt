@@ -12,21 +12,18 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by wimag on 7/23/15.
  */
 public class Scanner {
     private WebDriver driver;
-    private Alphabet alphabet;
     private Alphabet alphabet_testing;
     private BlockingQueue<URL> URLQueue = null;
     /** Constructs Scanner by creating a Firefox (at the moment) driver and logging at "http://localhost:8080/login" with root/root*/
     public Scanner(){
         driver = new FirefoxDriver();
         Utils.setUpDriver(driver);
-        alphabet = new MapAlphabet();
         alphabet_testing = new PostgreSQLAlphabet();
     }
 
@@ -222,12 +219,6 @@ public class Scanner {
                 /**/    } catch (Exception e) {
                 /**/        System.err.println("PostgreSQLAlphabet failed with: ");
                 /**/        e.printStackTrace(System.err);
-                /**/        System.err.println("    trying to Request deprecated MapAlphabet instead...");
-                /**/        try {
-                /**/            cachedEltype = alphabet.request(handle.url, handle.xpath);
-                /**/        } catch (SQLException ignored) {
-                /**/            ignored.printStackTrace(System.err);
-                /**/        }
                 /**/    }
                 if (cachedEltype != ElementType.unknown)
                     handle.eltype = cachedEltype;
@@ -235,10 +226,9 @@ public class Scanner {
                     oldHash = Utils.hashPage(driver);
                     handle.eltype = checkHandleType(driver, handle, oldHash);
                 /**/        try {
-                /**/         alphabet.add(handle);
                 /**/        alphabet_testing.add(handle);
                 /**/        } catch (Exception e) {
-                /**/           System.err.println("One of the Alphabet's failed with: ");
+                /**/           System.err.println("PostgreSQLAlphabet failed with: ");
                 /**/          e.printStackTrace(System.err);
                 /**/        }
                     try {
