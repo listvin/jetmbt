@@ -20,7 +20,9 @@ import java.util.NoSuchElementException;
 public class WebHandle {
     public final URL url;
     public final String xpath;
+
     private final int hash;
+    private boolean assignedToUrl = false;
 
     public ElementType eltype = ElementType.unknown;
 
@@ -57,5 +59,7 @@ public class WebHandle {
         return driver.findElement(By.xpath(xpath));
     }
 
+    public void assignToUrl(){ assignedToUrl = true; }
+    public boolean isAssignedToUrl(){ return assignedToUrl; }
     //TODO: shortestparent + depth
 }

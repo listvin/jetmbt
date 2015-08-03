@@ -169,7 +169,7 @@ public class Scanner {
         List<WebElement> elementList = driver.findElements(By.cssSelector("*"));
         System.err.printf("scan() of Scanner invoked. baseState.\n" +
                         "\t.url : %s\n" +
-                        "\tsequence.size() : %d\n" +
+                        "\t.sequence.size() : %d\n" +
                         "\tFound %d elements. Started generating xpathes...\n",
                 baseState.url.toString(), baseState.sequence.size(), elementList.size());
 
@@ -191,6 +191,7 @@ public class Scanner {
             if (++i > xpathsThreshold) break;
         }
 
+        System.err.printf("\tXpathes generated. Started generating testing interactivity...\n");
         for (WebHandle handle: allHandles){
             baseState.reach(driver);
 //            System.err.println("XPATH for element being tested: " + handle.xpath);
@@ -228,14 +229,15 @@ public class Scanner {
             }
 
 //            System.err.println("Determined as " + handle.eltype.name() + "\n");
-            //TODO return writables
+            //TODO return writables, but don't forget terminal
 //                if(handle.eltype.equals(ElementType.clickable) || handle.eltype.equals(ElementType.writable)) {
-            if(handle.eltype.equals(ElementType.clickable)) {
+            if (handle.eltype == ElementType.clickable || handle.eltype == ElementType.terminal || handle.eltype == ElementType.unknown) {
                 interactiveHandles.add(handle);
-                //TODO remove intaractive elements count limit
+                //TODO remove interactive elements count limit
                 if (interactiveHandles.size() >= 20) return interactiveHandles; //#hardcode
             }
         }
+        System.err.printf("\tFound %d interactive elements.\n", interactiveHandles.size());
         return interactiveHandles;
     }
 

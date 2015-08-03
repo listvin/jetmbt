@@ -32,12 +32,20 @@ public class Sequence extends ArrayList<Event>{
         return result;
     }
 
+    @Override
+    public boolean add(Event x){
+        boolean temp = super.add(x);
+        if (size() == 1)
+            this.get(0).handle.assignToUrl();
+        return temp;
+    }
+
     /**
      * Plays stored sequence of events, throws NoSuchElementException if one of events can't be performed.
      * @param driver WebDriver in which sequence should be played.
      */
     public void play(WebDriver driver) throws NoSuchElementException{
-        for(Event event: this) event.perform(driver);
+        for(Event event : this) event.perform(driver);
         //TODO: IRL replay of Sequence should throw something more informative or at least return bool in case of success
     }
 }

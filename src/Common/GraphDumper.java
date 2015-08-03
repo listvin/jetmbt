@@ -15,17 +15,24 @@ import java.util.*;
  * Created by listvin on 7/29/15.
  */
 public class GraphDumper {
-    public final String namePrefix;
+    private Runtime runtime = Runtime.getRuntime();
+    public final String folderName;
     private Integer dumpNum = 0;
     public GraphDumper() {
-        namePrefix = (new SimpleDateFormat("EEEddMMMyyyy_1HH_2mm_3ss.SSS"))
+        folderName = "graphs/" + (new SimpleDateFormat("ddMMMyyyy_EEE_HH%1mm%2ss.SSS%3"))
                 .format(new Date()).toLowerCase()
-                .replace("_1", "h").replace("_2", "m").replace("_3", "s");
-
+                .replace("%1", "h").replace("%2", "m").replace("%3", "s") + "/"; //#hardcode
+        String[] args = {"mkdir", folderName}; //#hardcode
+        try {
+            runtime.exec(args).waitFor();
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace(System.err);
+        }
+        colorMap.put("http://github.com/404", colorList[0]); //#hardcode
     }
 
-    private String generateName(Integer num){ return namePrefix + "_dump#" + num.toString(); }
-    private String generateName(){ return generateName(++dumpNum); }
+    private String generateName(Integer num){ return "dump#" + num.toString(); }
+    private String generateNewName(){ return generateName(++dumpNum); }
     private String recoverLastName(){ return generateName(dumpNum); }
 
     private Map<String, String> colorMap = new HashMap<>();
@@ -61,19 +68,19 @@ public class GraphDumper {
     private PrintWriter writer = null;
     public void initFile() throws FileNotFoundException, UnsupportedEncodingException{
         assert writer == null : "Have not closed file";
-        String name = generateName();
-        writer = new PrintWriter("graphs/" + name + ".gv", "UTF-8");
+        String name = generateNewName();
+        writer = new PrintWriter(folderName + name + ".gv", "UTF-8");
         writer.printf("digraph EFG {\n" +
                 "\tnode [style=filled]\n");
 
-        int i = 0;
+        int i = 0; lastInfoNodeNum = -1;
         for(String url : orderedUrls)
             addInfoNode(++i, url, url, colorMap.get(url));
     }
 
     //TODO this should be improved
     private List<String> orderedUrls = new ArrayList<>();
-    private int lastNum = -1;
+    private int lastInfoNodeNum = -1;
     public void addInfoNode(Integer num, String url, String label, String color){
         //writing info-node entry
         writer.printf("\tInfo%d [\n", num);
@@ -94,9 +101,9 @@ public class GraphDumper {
         writer.printf("\t];\n");
 
         //drawing edge to previous info node
-        if (lastNum != -1)
-            writer.printf("\tInfo%d -> Info%d;\n", lastNum, num);
-        lastNum = num;
+        if (lastInfoNodeNum != -1)
+            writer.printf("\tInfo%d -> Info%d;\n", lastInfoNodeNum, num);
+        lastInfoNodeNum = num;
     }
 
     private Map<Event, Integer> nodeID = new HashMap<>();
@@ -138,13 +145,12 @@ public class GraphDumper {
         writer.printf("\tNode%d -> Node%d;\n", nodeID.get(source), nodeID.get(destination));
     }
 
-    private Runtime runtime = Runtime.getRuntime();
     public String closeFile() throws IOException, InterruptedException{
         writer.println("}\n");
         writer.close();
         writer = null;
         String name = recoverLastName();
-        String[] args = {"dot", "-Tsvg", "graphs/" + name + ".gv", "-o", "graphs/" + name + ".svg"}; //#hardcode
+        String[] args = {"dot", "-Tsvg", folderName + name + ".gv", "-o", folderName + "graph" + ".svg"}; //#hardcode
         runtime.exec(args); //we don't need .waitFor() in our case, do we?
         return name;
     }

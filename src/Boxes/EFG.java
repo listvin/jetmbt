@@ -1,11 +1,12 @@
 package Boxes;
 
+import Common.ElementType;
 import Common.GraphDumper;
 
 import java.util.*;
 
 /**
- * This is implemntation of a holder for event flow graph.
+ * This is implementation of a holder for event flow graph.
  * It controls duplicating of nodes (Event-s) but doesn't control
  * duplicating of edges coming from the node, be careful with this.
  * Created by listvin on 7/23/15.
@@ -21,6 +22,9 @@ public class EFG {
      * @param destination ...and comes to this one.
      */
     private void addEdge(EdgeList edgeList, Event destination){
+        //TODO remove this crutch. Terminal and others should be drawen, but not in this way!
+        if (destination.handle.eltype != ElementType.clickable && destination.handle.eltype != ElementType.writable)
+            destination.setTicked(); //#hardcode
         //1. Destination event of edge which is being added may be new one. Let's check whether it exists and add if needed
         if (!adjList.containsKey(destination))
             adjList.put(destination, new EdgeList());
@@ -49,15 +53,18 @@ public class EFG {
      */
     public Event pickEventToGoFrom(Event source){
         EdgeList list = adjList.get(source);
-        while (list.get(list.firstToExplore).destination.isTicked()
-                && list.firstToExplore < list.size())
+        while (list.firstToExplore < list.size() && list.get(list.firstToExplore).destination.isTicked())
             ++list.firstToExplore;
         if (list.firstToExplore == list.size()) return null;
-        assert !list.get(list.firstToExplore).isTicked() : "Smth goes wrong when choosing picking next event for dfs";
+
         //Setting destination event as explored
-            list.get(list.firstToExplore).destination.setTicked();
+            //dfs is doing this now
+//            list.get(list.firstToExplore).destination.setTicked();
+
         //Setting here edge as explored in Edge itself and in EdgeList counter
-            list.get(list.firstToExplore).setTicked();
+            //not considering exploration of edges at all at the moment
+//            list.get(list.firstToExplore).setTicked();
+
             //at the moment dfs does this: list.get(list.firstToExplore).destination.setTicked(); //marking destination node
         return list.get(list.firstToExplore++).destination; //++ here is extremely important =/
     }
@@ -82,7 +89,6 @@ public class EFG {
             return false;
         }
     }
-
 }
 
 

@@ -24,17 +24,17 @@ public class Builder {
 
         scanner = new Scanner();
 
-        dfs(Event.createFakeTerminal(), new State(new URL(arg_url[0]), new Sequence()), 0);
+        dfs(Event.createFake("BUILDINGROOT"), new State(new URL(arg_url[0]), new Sequence()), 0); //#hardcode
 
         g.dump2dot();
     }
 
-    static final int depthLimit = 20; //#hardcode
+    static final int depthLimit = 10; //#hardcode
     /**
      * @param prev - this called "prev" because in browser this event was already performed. For simple dfs 
      */
     private static void dfs(Event prev, State cur, int depth){
-        prev.setTicked(); //for now let's make it classic, with touring by nodes instead of edges.
+        prev.setTicked(); //for now (for building) let's make it classic, with touring by nodes instead of edges.
         System.out.print("DFS:"); for (int i = 0; i < depth; ++i) System.out.printf("_%2d_", i); System.out.printf("Last event: %s | %s\n", prev.handle.url, prev.handle.xpath);
         g.addEdges(prev, Event.generateTestEvents(scanner.scan(cur)));
         if (depth < depthLimit)
@@ -43,8 +43,7 @@ public class Builder {
                 if (next != null) {
                     g.dump2dot();
                     dfs(next, cur.createAppended(next), depth + 1);
-                }
-                else break;
+                } else break;
             }
     }
 }
