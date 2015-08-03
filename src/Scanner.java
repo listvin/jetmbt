@@ -39,10 +39,6 @@ public class Scanner {
         driver.quit();
     }
 
-
-    public ElementType checElementType(WebDriver driver, WebHandle handle){
-        return checkHandleType(driver, handle, null);
-    }
     /**
      * Determines elementType with given handle in current Webdriver state
      * @param driver

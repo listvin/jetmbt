@@ -3,7 +3,7 @@ package Boxes;
 import org.openqa.selenium.WebDriver;
 
 /**
- * Created by user on 7/31/15.
+ * Created by wimag on 7/31/15.
  */
 public class LocalDriverManager {
     private static ThreadLocal<WebDriver> webDriver = new ThreadLocal<WebDriver>();
