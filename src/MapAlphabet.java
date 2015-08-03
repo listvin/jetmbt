@@ -1,7 +1,10 @@
 import Common.ElementType;
 
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -11,6 +14,7 @@ import java.util.Map;
  */
 public class MapAlphabet implements Alphabet{
     private Map<String, ElementType> map = new HashMap<>();
+
     private String crutch(URL url, String xpath){
         return url.toString() + "|" + xpath;
     }
@@ -31,4 +35,16 @@ public class MapAlphabet implements Alphabet{
     public void close() {
         //TODO add storage in simple csv
     }
+
+    //#HARDCODE #COSTIL'
+    public URL getRandomURL() throws MalformedURLException {
+        return new URL("vk.com");
+    }
+
+    public List<String> getHashesByURL(URL url){
+        return new ArrayList<String>();
+    }
+
+    public void addURL(URL url, String hash){}
+
 }

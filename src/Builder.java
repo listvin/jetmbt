@@ -5,6 +5,8 @@ import Boxes.State;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Separate class for building EFG.
@@ -18,14 +20,16 @@ public class Builder {
     public static void main(String [] arg_url) throws MalformedURLException{
         assert arg_url.length == 1 : "one argument expected - URL, to start building from";
 
-//        WebDriver driver = new FirefoxDriver();
-//        driver.manage().timeouts().implicitlyWait(500, TimeUnit.MILLISECONDS);
-//        driver.get(arg_url[0]);
+        BlockingQueue<URL> URLQueue = new ArrayBlockingQueue<URL>(1000);
+        URLHasher hasher = new URLHasher(URLQueue);
+        new Thread(hasher).start();
+        scanner = new Scanner(URLQueue);
 
         scanner = new Scanner();
 
         dfs(Event.createFake("BUILDINGROOT"), new State(new URL(arg_url[0]), new Sequence()), 0); //#hardcode
 
+        scanner.close();
         g.dump2dot();
     }
 

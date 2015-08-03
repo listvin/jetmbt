@@ -1,6 +1,8 @@
 
+import Boxes.State;
 import Common.ElementType;
 import Boxes.WebHandle;
+import com.sun.istack.internal.Nullable;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -132,6 +134,56 @@ public class PostgreSQLAlphabet implements Alphabet {
         return ElementType.unknown;
     }
 
+
+    /**
+     * get all hashes associated with url
+     * @param url
+     * @return
+     * @throws SQLException
+     */
+    public List<String> getHashesByURL(URL url) throws SQLException {
+        Statement stmt = c.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT * FROM urls WHERE url = '" + url.toString() + "'");
+        List<String> hashes = new ArrayList<String>();
+        while(rs.next()){
+            hashes.add(rs.getString("hash"));
+        }
+        stmt.close();
+        return hashes;
+
+    }
+
+    /**
+     * Adds URL/Hash pair to the DB.
+     * @param url
+     * @param hash - value "MyLittleDefaultHash" is used to marke unparseg pages
+     * @throws SQLException
+     */
+    public void addURL(URL url, String hash) throws SQLException {
+        Statement stmt = c.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT * from urls WHERE url = '" + url.toString() +
+                "' AND hash = '" + hash + "'");
+        if(!rs.isBeforeFirst()){
+            stmt.executeUpdate("INSERT INTO urls (url, hash) " +
+                    "VALUES ('" + url.toString() + "','" + hash + "')");
+        }
+        stmt.close();
+    }
+
+    @Nullable
+    public URL getRandomURL() throws SQLException, MalformedURLException {
+        Statement stmt = c.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT DISTINCT url FROM urls");
+        List<String> urls = new ArrayList<>();
+        if(!rs.isBeforeFirst()){
+            return null;
+        }
+        while (rs.next()){
+            urls.add(rs.getString("url"));
+        }
+        Random random = new Random();
+        return new URL(urls.get(random.nextInt(urls.size())));
+    }
     //for testing purposes only
     public static void main(String args[]) throws MalformedURLException, SQLException {
         PostgreSQLAlphabet alphabet = new PostgreSQLAlphabet();

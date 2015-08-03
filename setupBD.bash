@@ -45,6 +45,7 @@ if [ "$initdb" = "y" ]; then
   #что делать с ковычками?
 
   sudo -u postgres -H -- psql -U postgres -d $ALPHABETDB -c 'ALTER DATABASE alphabet OWNER TO jetmbt;'
+  sudo -u postgres -H -- psql -U postgres -d alphabet -c 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO jetmbt;'
   echo
 fi
 

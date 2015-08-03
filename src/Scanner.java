@@ -11,6 +11,7 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,31 +21,28 @@ public class Scanner {
     private WebDriver driver;
     private Alphabet alphabet;
     private Alphabet alphabet_testing;
-
+    private BlockingQueue<URL> URLQueue = null;
     /** Constructs Scanner by creating a Firefox (at the moment) driver and logging at "http://localhost:8080/login" with root/root*/
     public Scanner(){
         driver = new FirefoxDriver();
-        driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
-        driver.manage().timeouts().setScriptTimeout(2, TimeUnit.SECONDS);
-
+        Utils.setUpDriver(driver);
         alphabet = new MapAlphabet();
         alphabet_testing = new PostgreSQLAlphabet();
-
-        //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
-        driver.get("http://localhost:8080/login"); //#hardcode
-        System.err.printf("Have logged in with root/root at\n\tlocalhost:8080/login\n");
-
-        driver.findElement(By.id("id_l.L.login")).sendKeys("root");
-        driver.findElement(By.id("id_l.L.password")).sendKeys("root");
-        driver.findElement(By.id("id_l.L.loginButton")).click();
     }
 
+    public Scanner(BlockingQueue<URL> queue){
+        this();
+        URLQueue = queue;
+    }
     /** Terminates assigned driver*/
     public void close(){
         driver.quit();
     }
 
+
+    public ElementType checElementType(WebDriver driver, WebHandle handle){
+        return checkHandleType(driver, handle, null);
+    }
     /**
      * Determines elementType with given handle in current Webdriver state
      * @param driver
@@ -52,7 +50,7 @@ public class Scanner {
      * @return ElementType. unknown if driver url didnt match handle
      * @throws NoSuchElementException when element cant be found by its xpath
      */
-    public ElementType checkHandleType(WebDriver driver, WebHandle handle) throws NoSuchElementException{
+    public ElementType checkHandleType(WebDriver driver, WebHandle handle, String oldHash) throws NoSuchElementException{
         try {
             //###### Verifying opened url
             //TODO remove this crutch
@@ -70,7 +68,9 @@ public class Scanner {
 //                }
 
             //###### Storing data before tries to interact
-            String oldHash = Utils.hashPage(driver);
+            if(oldHash == null) {
+                oldHash = Utils.hashPage(driver);
+            }
             String oldWindowHandle = driver.getWindowHandle();
             driver.findElement(By.xpath(handle.xpath)).click();
 
@@ -165,6 +165,7 @@ public class Scanner {
         List<WebHandle> allHandles = new ArrayList<>();
 
         baseState.reach(driver);
+        String oldHash = Utils.hashPage(driver);
 
         List<WebElement> elementList = driver.findElements(By.cssSelector("*"));
         System.err.printf("scan() of Scanner invoked. baseState.\n" +
@@ -178,11 +179,20 @@ public class Scanner {
         URL curUrl = null;
         try {
             curUrl = new URL(driver.getCurrentUrl());
+
         } catch (MalformedURLException e) {
             //This MalformedURLException is rather annoying.
             //Why at all we still use the URL class...
             e.printStackTrace();
         }
+        if(URLQueue != null){
+            URLQueue.add(curUrl);
+            //attempt to trnuc sequence
+
+
+        }
+
+
         for(WebElement element: elementList){
             if(!element.isDisplayed() || !element.isEnabled()) continue;
             String xpath = Selectors.formXPATH(driver, element);
@@ -194,6 +204,18 @@ public class Scanner {
         System.err.printf("\tXpathes generated. Started generating testing interactivity...\n");
         for (WebHandle handle: allHandles){
             baseState.reach(driver);
+            if(URLQueue != null){
+                try {
+                    List<String> knownHashes = new ArrayList<>(alphabet_testing.getHashesByURL(curUrl));
+                    if(!knownHashes.isEmpty() && knownHashes.contains(oldHash)){
+                        System.out.println("Trnucted to url: " + curUrl.toString());
+                        baseState.truncToURL(curUrl);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+            }
 //            System.err.println("XPATH for element being tested: " + handle.xpath);
             try {
                 //###### Checking for cached result
@@ -214,7 +236,8 @@ public class Scanner {
                 if (cachedEltype != ElementType.unknown)
                     handle.eltype = cachedEltype;
                 else {
-                    handle.eltype = checkHandleType(driver, handle);
+                    oldHash = Utils.hashPage(driver);
+                    handle.eltype = checkHandleType(driver, handle, oldHash);
                 /**/        try {
                 /**/         alphabet.add(handle);
                 /**/        alphabet_testing.add(handle);
@@ -222,6 +245,15 @@ public class Scanner {
                 /**/           System.err.println("One of the Alphabet's failed with: ");
                 /**/          e.printStackTrace(System.err);
                 /**/        }
+                    try {
+                        List<String> knownHashes = alphabet_testing.getHashesByURL(curUrl);
+                        if(!knownHashes.isEmpty() && knownHashes.contains(oldHash)){
+                            System.out.println("Trnucted to url: " + curUrl.toString());
+                            baseState.truncToURL(curUrl);
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
             }catch (NoSuchElementException e){
                 //TODO: after hovering over button tooltip appears changing page structure(Extra div) => couldn't handle element.
