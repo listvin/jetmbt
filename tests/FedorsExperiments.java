@@ -33,5 +33,8 @@ public class FedorsExperiments {
                             .getClassLoader()
                             .getResource(FedorsExperiments.class.getName().replace('.', '/') + ".class")
             );
+
+            PrintStream ps = new PrintStream("test.txt");
+            ps.println("ga\n");
         }
 }

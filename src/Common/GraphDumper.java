@@ -1,6 +1,7 @@
 package Common;
 
 import Boxes.Event;
+import Boxes.WebHandle;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -35,35 +36,85 @@ public class GraphDumper {
     private String generateNewName(){ return generateName(++dumpNum); }
     private String recoverLastName(){ return generateName(dumpNum); }
 
-    private Map<String, String> colorMap = new HashMap<>();
-    private final String[] colorList = {
-            "fillcolor=black fontcolor=white",
-            "fillcolor=firebrick1 fontcolor=black",
-            "fillcolor=chocolate1 fontcolor=black",
-            "fillcolor=yellow fontcolor=black",
-            "fillcolor=lawngreen fontcolor=black",
-            "fillcolor=forestgreen fontcolor=white",
-            "fillcolor=cadetblue1 fontcolor=black",
-            "fillcolor=dodgerblue fontcolor=white",
-            "fillcolor=blue fontcolor=white",
-            "fillcolor=indigo fontcolor=white",
-            "fillcolor=deeppink fontcolor=black",
-            "fillcolor=lightpink fontcolor=black",
-            "fillcolor=orangered4 fontcolor=white",
-            "fillcolor=cornflowerblue fontcolor=black",
-            "fillcolor=maroon fontcolor=white",
-            "fillcolor=cyan fontcolor=black",
-            "fillcolor=gray fontcolor=black",
-            "fillcolor=gray29 fontcolor=white",
-            "fillcolor=antiquewhite fontcolor=black",
-            "fillcolor=aquamarine fontcolor=black",
-            "fillcolor=darkolivegreen1 fontcolor=black",
-            "fillcolor=limegreen fontcolor=white",
-            "fillcolor=brown fontcolor=white",
-            "fillcolor=aliceblue fontcolor=black",
-            "fillcolor=burlywood1 fontcolor=black",
-            "fillcolor=white fontcolor=black",
+    private Map<String, String[]> colorMap = new HashMap<>();
+    private final String[][] colorList = {
+            {"black", "white"},
+            {"firebrick1", "black"},
+            {"chocolate1", "black"},
+            {"yellow", "black"},
+            {"lawngreen", "black"},
+            {"forestgreen", "white"},
+            {"cadetblue1", "black"},
+            {"dodgerblue", "white"},
+            {"blue", "white"},
+            {"indigo", "white"},
+            {"deeppink", "black"},
+            {"lightpink", "black"},
+            {"orangered4", "white"},
+            {"cornflowerblue", "black"},
+            {"maroon", "white"},
+            {"cyan", "black"},
+            {"gray", "black"},
+            {"gray29", "white"},
+            {"antiquewhite", "black"},
+            {"aquamarine", "black"},
+            {"darkolivegreen1", "black"},
+            {"limegreen", "white"},
+            {"brown", "white"},
+            {"aliceblue", "black"},
+            {"burlywood1", "black"},
+            {"white", "black"},
     };
+
+    private String generateJMBTStamp(String url, String xpath, ElementType eltype, String context, Boolean assignedToUrl){
+        if (eltype == ElementType.info)
+            return "";
+        else
+            return String.format(
+                    "\t\t/*JMBT\n" +
+                    "\t\turl:%s\n" +
+                    "\t\txpath:%s\n" +
+                    "\t\teltype:%s\n" +
+                    "\t\tcontext:%s\n" +
+                    "\t\tassignedToUrl:%s\n" +
+                    "\t\tJMBT*/\n",
+                    url, xpath, eltype.name(), context == null ? "" : context, assignedToUrl ? "true" : "false");
+    }
+
+    private String generateHtmlNode(String nodeName,
+                                    String url,
+                                    String xpath,
+                                    ElementType eltype,
+                                    Boolean assignedToUrl,
+                                    String context){
+        String ch;
+        switch (eltype){
+            case unknown: ch = "&#9072;"; break;
+            case noninteractive: ch = "&#128683"; break;
+            case clickable: ch = "&#128432;"; break;
+            case writable: ch = "&#128430;"; break;
+            case info: ch = "&#128456;"; break; //really not ElementType
+            case terminal: ch = "&#9940;"; break;
+            default: ch = "&#9762;";
+        }
+
+        return String.format(
+                "\t%s [\n" +
+                "%s" +
+                "\t\ttooltip=\"%s\"\n" +
+                "\t\tfontcolor=\"%s\"\n" +
+                "\t\tlabel=<<TABLE PORT=\"common\" border=\"0\" cellborder=\"1\" cellspacing=\"0\" bgcolor=\"%s\"><TR>\n" +
+                "\t\t\t<TD cellpadding=\"0\"><FONT point-size=\"5\">%s</FONT></TD>\n" +
+                "\t\t\t<TD cellpadding=\"1\"><FONT point-size=\"10\">$x(\"%s\")</FONT></TD>\n" +
+                "\t\t\t<TD cellpadding=\"0\" href=\"%s\" tooltip=\"%s\"><FONT point-size=\"5\">%s</FONT></TD>\n" +
+                "\t\t</TR></TABLE>>\n" +
+                "\t];\n",
+                nodeName, generateJMBTStamp(url, xpath, eltype, context, assignedToUrl), eltype,
+                colorMap.get(url)[1], colorMap.get(url)[0],
+                ch, xpath, url, url,
+                assignedToUrl ? "<U><B>&#128279;</B></U>" : "&#128279;");
+    }
+
 
     private PrintWriter writer = null;
     public void initFile() throws FileNotFoundException, UnsupportedEncodingException{
@@ -71,34 +122,14 @@ public class GraphDumper {
         String name = generateNewName();
         writer = new PrintWriter(folderName + name + ".gv", "UTF-8");
         writer.printf("digraph EFG {\n" +
-                "\tnode [style=filled]\n");
-
-        int i = 0; lastInfoNodeNum = -1;
-        for(String url : orderedUrls)
-            addInfoNode(++i, url, url, colorMap.get(url));
+                "\tnode [shape=plaintext]\n");
     }
 
-    //TODO this should be improved
+    //TODO legend of a graph should be improved
     private List<String> orderedUrls = new ArrayList<>();
     private int lastInfoNodeNum = -1;
-    public void addInfoNode(Integer num, String url, String label, String color){
-        //writing info-node entry
-        writer.printf("\tInfo%d [\n", num);
-
-        //shaping node, corresponding to the fact it is InfoNode
-        writer.printf("\t\tshape=%s\n", "note");
-
-        //writing node's label
-        if (label != null) writer.printf("\t\tlabel=\"%s\"\n", label);
-
-        //writing node's url
-        if (url != null) writer.printf("\t\tURL=\"%s\"\n", url);
-
-        //painting node with color, corresponding to URL
-        writer.printf("\t\t%s\n", color);
-
-        //closing node definition
-        writer.printf("\t];\n");
+    public void addInfoNode(Integer num, String url, String label){
+        writer.print(generateHtmlNode(String.format("Info%d", num), url, label, ElementType.info, false, ""));
 
         //drawing edge to previous info node
         if (lastInfoNodeNum != -1)
@@ -112,46 +143,34 @@ public class GraphDumper {
         if (!nodeID.containsKey(node))
             nodeID.put(node, nodeID.size());
 
-        //writing node's name in file
-        writer.printf("\tNode%d [\n", nodeID.get(node));
-
-        //writing node's URL and xpath as label
-        writer.printf("\t\tlabel=\"%s\"\n" +
-                      "\t\tURL=\"%s\"\n", node.handle.xpath, node.handle.url.toString());
-
         //checking if we have a color assigned to event's url
         if (!colorMap.containsKey(node.handle.url.toString())) {
             orderedUrls.add(node.handle.url.toString());
             colorMap.put(node.handle.url.toString(), colorList[colorMap.size() % colorList.length]);
         }
 
-        //painting node with color, corresponding to URL
-        writer.printf("\t\t%s\n", colorMap.get(node.handle.url.toString()));
-
-        //shaping node, corresponding to it's ElementType
-        switch (node.handle.eltype) {
-            case terminal: writer.printf("\t\tshape=%s\n", "signature"); break;
-            case clickable: writer.printf("\t\tshape=%s\n", "rectangle"); break;
-            //TODO case clickable-baseable: writer.printf("\t\t\tshape=%s\n", "rectangle"); break;
-            //TODO case writable: ??context
-            default: writer.printf("\t\tshape=%s\n", "tripleoctagon");
-        }
-
-        //closing node definition
-        writer.printf("\t];\n");
+        writer.print(generateHtmlNode(String.format("Node%d", nodeID.get(node)),
+                node.handle.url.toString(), node.handle.xpath, node.handle.eltype, node.handle.isAssignedToUrl(), node.context));
     }
 
     public void addEdgeFromTo(Event source, Event destination){
-        writer.printf("\tNode%d -> Node%d;\n", nodeID.get(source), nodeID.get(destination));
+        writer.printf("\tNode%d:common -> Node%d:common;\n", nodeID.get(source), nodeID.get(destination));
     }
 
+    private Process graphVizInstance;
     public String closeFile() throws IOException, InterruptedException{
+        int i = 0; lastInfoNodeNum = -1;
+        for(String url : orderedUrls)
+            addInfoNode(++i, url, url);
+
         writer.println("}\n");
         writer.close();
         writer = null;
         String name = recoverLastName();
-        String[] args = {"dot", "-Tsvg", folderName + name + ".gv", "-o", folderName + "graph" + ".svg"}; //#hardcode
-        runtime.exec(args); //we don't need .waitFor() in our case, do we?
+        if (graphVizInstance == null || !graphVizInstance.isAlive()) {
+            String[] args = {"dot", "-Tsvg", folderName + name + ".gv", "-o", folderName + "graph" + ".svg"}; //#hardcode
+            graphVizInstance = runtime.exec(args); //we don't need .waitFor() in our case, do we?
+        }
         return name;
     }
 }

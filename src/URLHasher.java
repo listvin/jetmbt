@@ -49,7 +49,7 @@ public class URLHasher implements Runnable{
                     String hash = hashPage(driver);
                     alphabet.addURL(update, hash);
                 }
-                sleep(2000);
+                sleep(200);
             }
         }catch (InterruptedException | SQLException | MalformedURLException e){
             e.printStackTrace();

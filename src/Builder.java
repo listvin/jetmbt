@@ -25,7 +25,7 @@ public class Builder {
         new Thread(hasher).start();
         scanner = new Scanner(URLQueue);
 
-        scanner = new Scanner();
+        //scanner = new Scanner();
 
         dfs(Event.createFake("BUILDINGROOT"), new State(new URL(arg_url[0]), new Sequence()), 0); //#hardcode
 
@@ -33,7 +33,7 @@ public class Builder {
         g.dump2dot();
     }
 
-    static final int depthLimit = 10; //#hardcode
+    static final int depthLimit = 20; //#hardcode
     /**
      * @param prev - this called "prev" because in browser this event was already performed. For simple dfs 
      */

@@ -233,7 +233,7 @@ public class Scanner {
                 /**/        }
                     try {
                         List<String> knownHashes = alphabet_testing.getHashesByURL(curUrl);
-                        if(!knownHashes.isEmpty() && knownHashes.contains(oldHash)){
+                        if(!driver.getCurrentUrl().equals(curUrl.toString()) && !knownHashes.isEmpty() && knownHashes.contains(oldHash)){
                             System.out.println("Trnucted to url: " + curUrl.toString());
                             baseState.truncToURL(curUrl);
                         }
@@ -252,7 +252,7 @@ public class Scanner {
             if (handle.eltype == ElementType.clickable || handle.eltype == ElementType.terminal || handle.eltype == ElementType.unknown) {
                 interactiveHandles.add(handle);
                 //TODO remove interactive elements count limit
-                if (interactiveHandles.size() >= 20) return interactiveHandles; //#hardcode
+                if (interactiveHandles.size() >= 30) return interactiveHandles; //#hardcode
             }
         }
         System.err.printf("\tFound %d interactive elements.\n", interactiveHandles.size());
