@@ -38,6 +38,6 @@ public class State {
 
     public void truncToURL(URL url){
         this.url = url;
-        this.sequence = new Sequence();
+        sequence = new Sequence();
     }
 }
