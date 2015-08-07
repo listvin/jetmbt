@@ -3,6 +3,7 @@ package Boxes;
 import Common.ElementType;
 import Common.Utils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
@@ -20,8 +21,8 @@ import java.util.NoSuchElementException;
 public class WebHandle {
     public final URL url;
     public final String xpath;
-
     private final int hash;
+
     private boolean assignedToUrl = false;
 
     public ElementType eltype = ElementType.unknown;
@@ -35,6 +36,11 @@ public class WebHandle {
     public WebHandle(URL url, String xpath, ElementType eltype) {
         this(url, xpath);
         this.eltype = eltype;
+    }
+
+    public WebHandle(URL url, String xpath, ElementType eltype, boolean assignedToUrl) {
+        this(url, xpath, eltype);
+        this.assignedToUrl = assignedToUrl;
     }
 
     @Override
@@ -54,7 +60,7 @@ public class WebHandle {
      * WebDriver's findElement by preferred method.
      * @return WebElement ready to perform actions
      */
-    public WebElement findElement(WebDriver driver) throws NoSuchElementException{
+    public WebElement findElement(WebDriver driver) throws NoSuchElementException, InvalidSelectorException{
         assert driver.getCurrentUrl().equals(url.toString()) : "request of element not from this page occurred";
         return driver.findElement(By.xpath(xpath));
     }

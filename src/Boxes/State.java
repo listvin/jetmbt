@@ -1,8 +1,10 @@
 package Boxes;
 
+import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
 
 import java.net.URL;
+import java.util.NoSuchElementException;
 
 /**
  * Immutable class to store in reach states of browsing experience.
@@ -10,11 +12,16 @@ import java.net.URL;
  */
 public class State {
     public URL url;
-    public Sequence sequence;
+    public Sequence sequence = new Sequence();
 
-    /**Makes state based on copy of sent sequence.*/
-    public State(URL url, Sequence sequence){
+    /**Makes state based on given url.*/
+    public State(URL url){
         this.url = url;
+    }
+
+    /**Makes state based on given url and COPY of sent sequence.*/
+    public State(URL url, Sequence sequence){
+        this(url);
         this.sequence = new Sequence(sequence);
     }
 
@@ -31,7 +38,7 @@ public class State {
      * This reaches state stored inside. First goes to the URL, then plays sequence
      * @param driver WebDriver to come to state in.
      */
-    public void reach(WebDriver driver){
+    public void reach(WebDriver driver) throws NoSuchElementException, InvalidSelectorException{
         driver.get(url.toString());
         sequence.play(driver);
     }

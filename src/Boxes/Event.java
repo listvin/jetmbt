@@ -2,6 +2,7 @@ package Boxes;
 
 import Common.ElementType;
 import Common.Utils;
+import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
 
 import java.net.MalformedURLException;
@@ -9,6 +10,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * WARNING! All factories of instances of this class guarantee, that there won't be generated
@@ -46,13 +48,17 @@ public class Event extends Tickable{
     }
 
     /**Factory method for convenient creating of fake element. Will be terminal*/
-    public static Event createFake(String name){
+    public static Event createTerminal(String name){
         try{
-            return new Event(new WebHandle(new URL("http://github.com/404"), name, ElementType.terminal), ""); //#hardcode
+            return creationFinalizer(new Event(new WebHandle(new URL("http://github.com/404"), name, ElementType.terminal), "")); //#hardcode
         }catch (MalformedURLException ignored){
             //Hardcoded URL can't be malformed.. I think..
             return null;
         }
+    }
+
+    public static Event create(WebHandle handle, String context){
+        return creationFinalizer(new Event(handle, context));
     }
 
     /**
@@ -62,7 +68,7 @@ public class Event extends Tickable{
      */
     public static List<Event> generateTestEvents(List<WebHandle> list){
         //TODO here parameters of generated events can be specified
-        //TODO writeable are determined as clickables for a while
+        //TODO writable are determined as clickable for a while
         List <Event> result = new ArrayList<>();
         for (WebHandle handle : list) result.add(creationFinalizer(new Event(handle, "")));
         return result;
@@ -71,7 +77,7 @@ public class Event extends Tickable{
     /**Performs event in specified WebDriver
      * @param driver WebDriver to perform in
      */
-    public void perform(WebDriver driver){
+    public void perform(WebDriver driver) throws NoSuchElementException, InvalidSelectorException{
         switch (handle.eltype){
             case clickable: handle.findElement(driver).click(); break;
             case writable: handle.findElement(driver).sendKeys(context); break;

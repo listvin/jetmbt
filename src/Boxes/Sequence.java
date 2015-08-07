@@ -1,5 +1,6 @@
 package Boxes;
 
+import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
 
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ public class Sequence extends ArrayList<Event>{
      * Plays stored sequence of events, throws NoSuchElementException if one of events can't be performed.
      * @param driver WebDriver in which sequence should be played.
      */
-    public void play(WebDriver driver) throws NoSuchElementException{
+    public void play(WebDriver driver) throws NoSuchElementException, InvalidSelectorException{
         for(Event event : this) event.perform(driver);
         //TODO: IRL replay of Sequence should throw something more informative or at least return bool in case of success
     }

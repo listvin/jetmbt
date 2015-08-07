@@ -51,7 +51,7 @@ public class Scanner {
                 do {
                     System.err.println("opened URL: " + driver.getCurrentUrl());
                     System.err.println("handle URL: " + handle.url.toString());
-                    System.err.println("=======================TRYING TO SLEEP NOW=======================");
+                    System.err.println("======TRYING TO SLEEP NOW====== @ Scanner.java:54");
                     Utils.sleep(1000);
                 }while(!driver.getCurrentUrl().equals(handle.url.toString()));
             }
@@ -65,7 +65,16 @@ public class Scanner {
                 oldHash = Utils.hashPage(driver);
             }
             String oldWindowHandle = driver.getWindowHandle();
-            driver.findElement(By.xpath(handle.xpath)).click();
+            //TODO one more crutch with exlicit waits. Maybe better move it to another place?
+            while (true) {
+                try {
+                    driver.findElement(By.xpath(handle.xpath)).click();
+                    break;
+                } catch (TimeoutException e){
+                    e.printStackTrace(System.err);
+                    System.err.println("======TRYING TO SLEEP NOW====== @ Scanner.java:75");
+                }
+            }
 
             //###### Check if alert window exists
             if (ExpectedConditions.alertIsPresent().apply(driver) != null){
@@ -157,7 +166,13 @@ public class Scanner {
         List<WebHandle> interactiveHandles = new ArrayList<>();
         List<WebHandle> allHandles = new ArrayList<>();
 
-        baseState.reach(driver);
+        try {
+            baseState.reach(driver);
+        } catch (Exception e){
+            //TODO fix (invalid selector exception seems to be reason)
+            e.printStackTrace(System.err);
+            return new ArrayList<>();
+        }
         String oldHash = Utils.hashPage(driver);
 
         List<WebElement> elementList = driver.findElements(By.cssSelector("*"));
@@ -180,9 +195,6 @@ public class Scanner {
         }
         if(URLQueue != null){
             URLQueue.add(curUrl);
-            //attempt to trnuc sequence
-
-
         }
 
 
@@ -191,17 +203,23 @@ public class Scanner {
             String xpath = Selectors.formXPATH(driver, element);
             WebHandle handle = new WebHandle(curUrl, xpath);
             allHandles.add(handle);
-            if (++i > xpathsThreshold) break;
+//            if (++i > xpathsThreshold) break;
         }
 
         System.err.printf("\tXpathes generated. Started generating testing interactivity...\n");
         for (WebHandle handle: allHandles){
-            baseState.reach(driver);
-            if(URLQueue != null){
+            try {
+                baseState.reach(driver);
+            } catch (Exception e){
+                //TODO fix (invalid selector exception seems to be reason)
+                e.printStackTrace(System.err);
+                return new ArrayList<>();
+            }
+            if(URLQueue != null && baseState.sequence.size() > 0){
                 try {
                     List<String> knownHashes = new ArrayList<>(alphabet_testing.getHashesByURL(curUrl));
-                    if(!knownHashes.isEmpty() && knownHashes.contains(oldHash)){
-                        System.out.println("Trnucted to url: " + curUrl.toString());
+                    if(knownHashes.contains(oldHash)){
+//                        System.out.println("Trnucted to url: " + curUrl.toString());
                         baseState.truncToURL(curUrl);
                     }
                 } catch (SQLException e) {
@@ -228,13 +246,13 @@ public class Scanner {
                 /**/        try {
                 /**/        alphabet_testing.add(handle);
                 /**/        } catch (Exception e) {
-                /**/           System.err.println("PostgreSQLAlphabet failed with: ");
-                /**/          e.printStackTrace(System.err);
+                /**/            System.err.println("PostgreSQLAlphabet failed with: ");
+                /**/            e.printStackTrace(System.err);
                 /**/        }
                     try {
                         List<String> knownHashes = alphabet_testing.getHashesByURL(curUrl);
-                        if(!driver.getCurrentUrl().equals(curUrl.toString()) && !knownHashes.isEmpty() && knownHashes.contains(oldHash)){
-                            System.out.println("Trnucted to url: " + curUrl.toString());
+                        if(baseState.sequence.size() > 0 && !driver.getCurrentUrl().equals(curUrl.toString()) && knownHashes.contains(oldHash)){
+//                            System.out.println("Trnucted to url: " + curUrl.toString());
                             baseState.truncToURL(curUrl);
                         }
                     } catch (SQLException e) {
@@ -252,7 +270,7 @@ public class Scanner {
             if (handle.eltype == ElementType.clickable || handle.eltype == ElementType.terminal || handle.eltype == ElementType.unknown) {
                 interactiveHandles.add(handle);
                 //TODO remove interactive elements count limit
-                if (interactiveHandles.size() >= 30) return interactiveHandles; //#hardcode
+//                if (interactiveHandles.size() >= 30) return interactiveHandles; //#hardcode
             }
         }
         System.err.printf("\tFound %d interactive elements.\n", interactiveHandles.size());

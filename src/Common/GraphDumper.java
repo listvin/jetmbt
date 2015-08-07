@@ -1,14 +1,15 @@
 package Common;
 
+import Boxes.EFG;
 import Boxes.Event;
 import Boxes.WebHandle;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Class for convenient writing of EFG to viewable files.
@@ -133,7 +134,7 @@ public class GraphDumper {
 
         //drawing edge to previous info node
         if (lastInfoNodeNum != -1)
-            writer.printf("\tInfo%d -> Info%d;\n", lastInfoNodeNum, num);
+            writer.printf("\tInfo%d -> Info%d [dir=none];\n", lastInfoNodeNum, num);
         lastInfoNodeNum = num;
     }
 
@@ -172,5 +173,46 @@ public class GraphDumper {
             graphVizInstance = runtime.exec(args); //we don't need .waitFor() in our case, do we?
         }
         return name;
+    }
+
+
+    private ArrayList<Event> rNodeID = new ArrayList<>();
+    Pattern pEdge = Pattern.compile("\\s*Node(\\d+):common\\s*->\\s*Node(\\d+):common;");//1,2
+    Pattern pNode = Pattern.compile("\\s*Node(\\d+)\\s*\\[");//1
+    Pattern pJMBThead = Pattern.compile("\\s*/\\*JMBT");
+    Pattern pUrl = Pattern.compile("\\s*url:(\\p{all}*)"); //1
+    Pattern pXpath = Pattern.compile("\\s*xpath:(\\p{all}*)"); //1
+    Pattern pEltype = Pattern.compile("\\s*eltype:(\\p{all}*)"); //1
+    Pattern pContext = Pattern.compile("\\s*context:(\\p{all}*)"); //1
+    Pattern pAssigned = Pattern.compile("\\s*assignedToUrl:(\\p{all}*)"); //1
+    Pattern pJMBTtail = Pattern.compile("\\s*JMBT\\*/");
+    public void parseFile(EFG g, String path) throws IOException{
+        String s;
+        BufferedReader reader = new BufferedReader(new FileReader(path));
+        Matcher m;
+        while ((s = reader.readLine()) != null){
+            if ((m = pEdge.matcher(s)).matches())
+                g.addEdgeUnchecked(rNodeID.get(Integer.valueOf(m.group(1))), rNodeID.get(Integer.valueOf(m.group(2))));
+            else if ((m = pNode.matcher(s)).matches()) {
+                int id = Integer.valueOf(m.group(1));
+                if (!pJMBThead.matcher(reader.readLine()).matches()) throw new IOException("not found /*JMBT record");
+                if (!(m = pUrl.matcher(reader.readLine())).matches()) throw new IOException("not found url: record");
+                URL url = new URL(m.group(1));
+                if (!(m = pXpath.matcher(reader.readLine())).matches()) throw new IOException("not found xpath: record");
+                String xpath = m.group(1);
+                if (!(m = pEltype.matcher(reader.readLine())).matches()) throw new IOException("not found eltype: record");
+                ElementType eltype = ElementType.valueOf(m.group(1));
+                if (!(m = pContext.matcher(reader.readLine())).matches()) throw new IOException("not found context: record");
+                String context = m.group(1);
+                if (!(m = pAssigned.matcher(reader.readLine())).matches()) throw new IOException("not found assignedToUrl: record");
+                boolean assigned = Boolean.valueOf(m.group(1));
+                if (!(m = pJMBTtail.matcher(reader.readLine())).matches()) throw new IOException("not found JMBT*/ record");
+                Event event = Event.create(new WebHandle(url, xpath, eltype, assigned), context);
+                g.addEventUnchecked(event);
+                System.err.println("id: " + id);
+                while (rNodeID.size() < id+1) rNodeID.add(null);
+                rNodeID.set(id, event);
+            }
+        }
     }
 }

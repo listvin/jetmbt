@@ -3,6 +3,12 @@ package Boxes;
 import Common.ElementType;
 import Common.GraphDumper;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -15,6 +21,43 @@ public class EFG {
     private GraphDumper dumper = new GraphDumper();
     private Random random = new Random(239);
     private Map<Event, EdgeList> adjList = new HashMap<>();
+    public EFG(){}
+    public EFG(String path){
+        try {
+            dumper.parseFile(this, path);
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+        }
+//        for (Map.Entry<Event, EdgeList> entry : adjList.entrySet()) //#hardcode - so, we are loading graph not for building only
+//            if (entry.getValue().size() > 0) entry.getKey().setTicked();
+    }
+
+    //TODO turn this in use instead of builder's inside search with check through isScannedOnce(Event)
+    public Event pickStart(){
+        for (Event node : adjList.keySet())
+            if (!node.isTicked()){
+                node.setTicked();
+                return node;
+            }
+        return null;
+    }
+
+    public boolean isScannedOnce(Event event){ return adjList.get(event).size() > 0; }
+
+    public void addEventUnchecked(Event node){
+        adjList.put(node, new EdgeList());
+    }
+
+    private void addEdgeUnchecked(EdgeList edgeList, Event destination){
+        edgeList.add(new Edge(destination));
+    }
+
+    public void addEdgeUnchecked(Event source, Event destination){
+        //TODO remove this crutch. Terminal and others should be drawen, but not in this way!
+        if (destination.handle.eltype != ElementType.clickable && destination.handle.eltype != ElementType.writable)
+            destination.setTicked(); //#hardcode
+        addEdgeUnchecked(adjList.get(source), destination);
+    }
 
     /**
      * Adds one edge. See {@link #addEdges(Event, List)} to add edges in batch.
@@ -22,14 +65,11 @@ public class EFG {
      * @param destination ...and comes to this one.
      */
     private void addEdge(EdgeList edgeList, Event destination){
-        //TODO remove this crutch. Terminal and others should be drawen, but not in this way!
-        if (destination.handle.eltype != ElementType.clickable && destination.handle.eltype != ElementType.writable)
-            destination.setTicked(); //#hardcode
         //1. Destination event of edge which is being added may be new one. Let's check whether it exists and add if needed
         if (!adjList.containsKey(destination))
-            adjList.put(destination, new EdgeList());
+            addEventUnchecked(destination);
         //2. Adding edge to the certain list of outgoing paths
-        edgeList.add(new Edge(destination));
+        addEdgeUnchecked(edgeList, destination);
     }
 
     /**
@@ -39,7 +79,7 @@ public class EFG {
      */
     public void addEdges(Event source, List <Event> destList){
         if (!adjList.containsKey(source))
-            adjList.put(source, new EdgeList());
+            addEventUnchecked(source);
         //So, shuffling. Here it is.
             Collections.shuffle(destList);
         for (Event destination : destList) addEdge(adjList.get(source), destination);

@@ -35,7 +35,7 @@ public class URLHasher implements Runnable{
                 URL url = URLQueue.poll(1000, TimeUnit.MILLISECONDS);
                 if(url != null){
                     driver.get(url.toString());
-                    System.out.println("Aquired " + url.toString() + " as a Hash url parameter");
+//                    System.out.println("Aquired " + url.toString() + " as a Hash url parameter");
                     String hash = hashPage(driver);
                     alphabet.addURL(url, hash);
                 }else{
@@ -44,12 +44,12 @@ public class URLHasher implements Runnable{
                         sleep(200);
                         continue;
                     }
-                    System.out.println("Chosen " + update.toString() + " as a Hash url parameter");
+//                    System.out.println("Chosen " + update.toString() + " as a Hash url parameter");
                     driver.get(update.toString());
                     String hash = hashPage(driver);
                     alphabet.addURL(update, hash);
                 }
-                sleep(200);
+                sleep(3000);
             }
         }catch (InterruptedException | SQLException | MalformedURLException e){
             e.printStackTrace();
