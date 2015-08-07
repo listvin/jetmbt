@@ -42,7 +42,7 @@ public class EFG {
         return null;
     }
 
-    public boolean isScannedOnce(Event event){ return adjList.get(event).size() > 0; }
+    public boolean isScannedOnce(Event event){ return adjList.containsKey(event) && adjList.get(event).size() > 0; }
 
     public void addEventUnchecked(Event node){
         adjList.put(node, new EdgeList());
