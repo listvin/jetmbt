@@ -216,7 +216,7 @@ public class Scanner {
             }
         }
 
-        log.debug("\tXpathes generated. Started generating testing interactivity...\n");
+        log.debug("\tXpathes generated. Started testing interactivity...\n");
         for (WebHandle handle: allHandles){
             log.info("XPATH for element being tested: " + handle.xpath);
             try {
