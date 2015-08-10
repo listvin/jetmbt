@@ -72,12 +72,12 @@ public class GraphDumper {
         else
             return String.format(
                     "\t\t/*JMBT\n" +
-                            "\t\turl:%s\n" +
-                            "\t\txpath:%s\n" +
-                            "\t\teltype:%s\n" +
-                            "\t\tcontext:%s\n" +
-                            "\t\tassignedToUrl:%s\n" +
-                            "\t\tJMBT*/\n",
+                    "\t\turl:%s\n" +
+                    "\t\txpath:%s\n" +
+                    "\t\teltype:%s\n" +
+                    "\t\tcontext:%s\n" +
+                    "\t\tassignedToUrl:%s\n" +
+                    "\t\tJMBT*/\n",
                     url, xpath, eltype.name(), context == null ? "" : context, assignedToUrl ? "true" : "false");
     }
 
@@ -168,7 +168,7 @@ public class GraphDumper {
         writer = null;
         String name = recoverLastName();
         if (graphVizInstance == null || !graphVizInstance.isAlive()) {
-            String[] args = {"dot", "-Tsvg", folderName + name + ".gv", "-o", folderName + "graph" + ".svg"}; //#hardcode
+            String[] args = {"dot", "-Tsvg", path + name + ".gv", "-o", path + "graph" + ".svg"}; //#hardcode
             graphVizInstance = runtime.exec(args); //we don't need .waitFor() in our case, do we?
         }
         return name;
