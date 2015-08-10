@@ -6,7 +6,6 @@ import Boxes.WebHandle;
 
 import java.io.*;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,6 +19,7 @@ public class GraphDumper {
     private Runtime runtime = Runtime.getRuntime();
     public final String folderName, path;
     private Integer dumpNum = 0;
+    private Logger log = new Logger(this, Logger.Level.debug);
     public GraphDumper() {
         folderName = Logger.getFolderTimeName();
         path = "graphs/" + folderName + "/";
@@ -27,7 +27,7 @@ public class GraphDumper {
         try {
             runtime.exec(args).waitFor();
         } catch (InterruptedException | IOException e) {
-            e.printStackTrace(System.err);
+            log.exception(e);
         }
         colorMap.put("http://github.com/404", colorList[0]); //#hardcode
     }
@@ -72,12 +72,12 @@ public class GraphDumper {
         else
             return String.format(
                     "\t\t/*JMBT\n" +
-                    "\t\turl:%s\n" +
-                    "\t\txpath:%s\n" +
-                    "\t\teltype:%s\n" +
-                    "\t\tcontext:%s\n" +
-                    "\t\tassignedToUrl:%s\n" +
-                    "\t\tJMBT*/\n",
+                            "\t\turl:%s\n" +
+                            "\t\txpath:%s\n" +
+                            "\t\teltype:%s\n" +
+                            "\t\tcontext:%s\n" +
+                            "\t\tassignedToUrl:%s\n" +
+                            "\t\tJMBT*/\n",
                     url, xpath, eltype.name(), context == null ? "" : context, assignedToUrl ? "true" : "false");
     }
 
@@ -100,15 +100,15 @@ public class GraphDumper {
 
         return String.format(
                 "\t%s [\n" +
-                "%s" +
-                "\t\ttooltip=\"%s\"\n" +
-                "\t\tfontcolor=\"%s\"\n" +
-                "\t\tlabel=<<TABLE PORT=\"common\" border=\"0\" cellborder=\"1\" cellspacing=\"0\" bgcolor=\"%s\"><TR>\n" +
-                "\t\t\t<TD cellpadding=\"0\"><FONT point-size=\"5\">%s</FONT></TD>\n" +
-                "\t\t\t<TD cellpadding=\"1\"><FONT point-size=\"10\">$x(\"%s\")</FONT></TD>\n" +
-                "\t\t\t<TD cellpadding=\"0\" href=\"%s\" tooltip=\"%s\"><FONT point-size=\"5\">%s</FONT></TD>\n" +
-                "\t\t</TR></TABLE>>\n" +
-                "\t];\n",
+                        "%s" +
+                        "\t\ttooltip=\"%s\"\n" +
+                        "\t\tfontcolor=\"%s\"\n" +
+                        "\t\tlabel=<<TABLE PORT=\"common\" border=\"0\" cellborder=\"1\" cellspacing=\"0\" bgcolor=\"%s\"><TR>\n" +
+                        "\t\t\t<TD cellpadding=\"0\"><FONT point-size=\"5\">%s</FONT></TD>\n" +
+                        "\t\t\t<TD cellpadding=\"1\"><FONT point-size=\"10\">$x(\"%s\")</FONT></TD>\n" +
+                        "\t\t\t<TD cellpadding=\"0\" href=\"%s\" tooltip=\"%s\"><FONT point-size=\"5\">%s</FONT></TD>\n" +
+                        "\t\t</TR></TABLE>>\n" +
+                        "\t];\n",
                 nodeName, generateJMBTStamp(url, xpath, eltype, context, assignedToUrl), eltype,
                 colorMap.get(url)[1], colorMap.get(url)[0],
                 ch, xpath, url, url,
@@ -208,7 +208,7 @@ public class GraphDumper {
                 if (!(m = pJMBTtail.matcher(reader.readLine())).matches()) throw new IOException("not found JMBT*/ record");
                 Event event = Event.create(new WebHandle(url, xpath, eltype, assigned), context);
                 g.addEventUnchecked(event);
-                System.err.println("id: " + id);
+                log.info("Have read Node" + id + " from file.");
                 while (rNodeID.size() < id+1) rNodeID.add(null);
                 rNodeID.set(id, event);
             }

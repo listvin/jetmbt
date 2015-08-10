@@ -2,6 +2,7 @@ package Boxes;
 
 import Common.ElementType;
 import Common.Utils;
+import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
 
@@ -77,7 +78,7 @@ public class Event extends Tickable{
     /**Performs event in specified WebDriver
      * @param driver WebDriver to perform in
      */
-    public void perform(WebDriver driver) throws NoSuchElementException, InvalidSelectorException{
+    public void perform(WebDriver driver) throws ElementNotVisibleException, NoSuchElementException, InvalidSelectorException{
         switch (handle.eltype){
             case clickable: handle.findElement(driver).click(); break;
             case writable: handle.findElement(driver).sendKeys(context); break;

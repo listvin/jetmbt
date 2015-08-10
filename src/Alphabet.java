@@ -13,15 +13,6 @@ import java.util.List;
  */
 public interface Alphabet {
 
-
-    class HandleTypePredefinedException extends Exception{
-        public HandleTypePredefinedException(){ super(); }
-    }
-
-    class ConflictingHandleStored extends Exception{
-        public ConflictingHandleStored(){ super(); }
-    }
-
     /**
      * Method to look whether type of element specified by is
      * url and xpath is already known.
@@ -29,11 +20,9 @@ public interface Alphabet {
      *               for. eltype field MUST be set to unknown.
      * @return New WebHandle, based on old one with modified field
      * eltype if it is known. Otherwise Old WebHandle returned.
-     * @throws HandleTypePredefinedException in case eltype field is already
-     * set to smth not equal to unknown.
      */
-    default WebHandle request(WebHandle handle) throws HandleTypePredefinedException, SQLException {
-        if (handle.eltype != ElementType.unknown) throw new HandleTypePredefinedException();
+    default WebHandle request(WebHandle handle) {
+        assert handle.eltype != ElementType.unknown : "handle type predefined";
         ElementType eltype = request(handle.url, handle.xpath);
         if (eltype != ElementType.unknown)
             return new WebHandle(handle.url, handle.xpath, eltype);
@@ -47,34 +36,35 @@ public interface Alphabet {
      * @param xpath - Xpath to search for
      * @return ElementType.unknown if not cached, otherwise - cached value.
      */
-    ElementType request(URL url, String xpath) throws SQLException;
+    ElementType request(URL url, String xpath);
 
     /**
      * Method for caching new testing results
      * @param handle - eltype field should be properly set
      */
-    default void add(WebHandle handle) throws ConflictingHandleStored, SQLException {
+    default void add(WebHandle handle) {
         add(handle.url, handle.xpath, handle.eltype);
     }
 
     /**
      * Lower method for caching new testing results {@link #add(WebHandle)}
+     * Changes element type if similar element present in DB. Otherwise - creates it.
      * @param url - URL is not verified
      * @param xpath - Xpath also not verified
      * @param eltype - value to cache.
      */
-    void add(URL url, String xpath, ElementType eltype) throws ConflictingHandleStored, SQLException;
+    void add(URL url, String xpath, ElementType eltype);
 
     void close();
 
 
     /**
-     * Add URL with specified hash, if entry already exists - then do nothing
+     * Adds URL with specified hash, if entry already exists - replaces with new data
      * @param url
      * @param hash
      * @throws SQLException
      */
-    void addURL(URL url, String hash) throws SQLException;
+    void addURL(URL url, String hash);
 
     /**
      * Returns all hashes of url
@@ -82,14 +72,12 @@ public interface Alphabet {
      * @return - Arraylist of all hashes
      * @throws SQLException
      */
-    List<String> getHashesByURL(URL url) throws SQLException;
+    List<String> getHashesByURL(URL url);
 
     /**
      * Get random URL from encountered.
      * @return
      * @throws SQLException
      */
-    URL getRandomURL() throws SQLException, MalformedURLException;
-
-    public void addOrModify(WebHandle handle) throws SQLException;
+    URL getRandomURL();
 }

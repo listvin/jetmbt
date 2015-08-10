@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  * Created by user on 7/24/15.
  */
 public class Utils {
+    static Logger log = Logger.get(new Utils());
 
     public static void sleep(long millis){
         try {
@@ -100,8 +101,8 @@ public class Utils {
             FileUtils.copyFile(scrFile, new File("screenshots/" + hexString + ".png"));
 
         } catch (FileNotFoundException e) {
-            System.out.print("Couldn't calculate state hash");
-            e.printStackTrace();
+            log.error("Couldn't calculate state hash");
+            log.exception(e);
         } catch (NoSuchAlgorithmException | IOException e) {
             e.printStackTrace();
         }
@@ -121,7 +122,7 @@ public class Utils {
 
         //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
         driver.get("http://localhost:8080/login"); //#hardcode
-        System.err.printf("Have logged in with root/root at\n\tlocalhost:8080/login\n");
+        log.report("Have logged in with root/root at\n\tlocalhost:8080/login\n");
 
         driver.findElement(By.id("id_l.L.login")).sendKeys("root");
         driver.findElement(By.id("id_l.L.password")).sendKeys("root");

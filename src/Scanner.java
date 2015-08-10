@@ -1,14 +1,12 @@
-import Boxes.Sequence;
 import Boxes.State;
 import Boxes.WebHandle;
 import Common.*;
+import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.SystemClock;
 
-import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.SQLException;
@@ -21,6 +19,7 @@ import static Common.Selectors.*;
  * Created by wimag on 7/23/15.
  */
 public class Scanner {
+    private Logger log = new Logger(this, Logger.Level.debug, Logger.Level.all);
     private WebDriver driver;
     private Alphabet alphabet_testing;
     private BlockingQueue<URL> URLQueue = null;
@@ -59,9 +58,9 @@ public class Scanner {
             //TODO remove this crutch
             if (!driver.getCurrentUrl().equals(handle.url.toString())){
                 do {
-                    System.err.println("opened URL: " + driver.getCurrentUrl());
-                    System.err.println("handle URL: " + handle.url.toString());
-                    System.err.println("=======================TRYING TO SLEEP NOW=======================");
+                    log.debug("opened URL: " + driver.getCurrentUrl() + "\n" +
+                            "needed URL: " + handle.url.toString() + "\n" +
+                            "======NOW TRYING TO SLEEP ONE SECOND======");
                     Utils.sleep(1000);
                 }while(!driver.getCurrentUrl().equals(handle.url.toString()));
             }
@@ -164,32 +163,34 @@ public class Scanner {
         List<WebHandle> interactiveHandles = new ArrayList<>();
         List<WebHandle> allHandles = new ArrayList<>();
 
-        baseState.reach(driver);
+        try {
+            baseState.reach(driver);
+        } catch (ElementNotVisibleException | ElementNotFoundException | NoSuchElementException e){
+            log.error("Can't reach state in scanner to get initial value for oldHash.");
+            log.exception(e);
+            return new ArrayList<>();
+        }
         String oldHash = Utils.hashPage(driver);
 
         List<WebElement> elementList = driver.findElements(By.cssSelector("*"));
-        System.err.printf("scan() of Scanner invoked. baseState.\n" +
-                        "\t.url : %s\n" +
-                        "\t.sequence.size() : %d\n" +
+        log.debug(String.format("scan() invoked.\n" +
+                        "\tbaseState.url : %s\n" +
+                        "\tbaseState.sequence.size() : %d\n" +
                         "\tFound %d elements. Started generating xpathes...\n",
-                baseState.url.toString(), baseState.sequence.size(), elementList.size());
+                baseState.url.toString(), baseState.sequence.size(), elementList.size()));
 
         //TODO remove threshold for count of generated xpathes per scan session
         //int i = 0, xpathsThreshold = 80; //#hardcode
         URL curUrl = null;
         try {
             curUrl = new URL(driver.getCurrentUrl());
-
         } catch (MalformedURLException e) {
             //This MalformedURLException is rather annoying.
             //Why at all we still use the URL class...
-            e.printStackTrace();
+            log.exception(e);
         }
         if(URLQueue != null){
             URLQueue.add(curUrl);
-            //attempt to trnuc sequence
-
-
         }
 
         //Testing faster ways
@@ -206,56 +207,39 @@ public class Scanner {
         }
 
         List<String> hashes = new ArrayList<>(Collections.singletonList(oldHash));
-        Random random = new Random(System.currentTimeMillis());
+        Random random = new Random(239);
         if(URLQueue != null){
-            try {
-                List<String> knownHashes = new ArrayList<>(alphabet_testing.getHashesByURL(curUrl));
-                if(!baseState.url.equals(curUrl) && !knownHashes.isEmpty() && knownHashes.contains(oldHash)){
-                    System.out.println("Trnucted to url: " + curUrl.toString());
-                    baseState.truncToURL(curUrl);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
+            List<String> knownHashes = new ArrayList<>(alphabet_testing.getHashesByURL(curUrl));
+            if(!baseState.url.equals(curUrl) && !knownHashes.isEmpty() && knownHashes.contains(oldHash)){
+                log.debug("Trunc to url performed: " + (curUrl != null ? curUrl.toString() : "null"));
+                baseState.truncToURL(curUrl);
             }
-
         }
-        System.err.printf("\tXpathes generated. Started generating testing interactivity...\n");
-        for (WebHandle handle: allHandles){
-            baseState.reach(driver);
 
-//            System.err.println("XPATH for element being tested: " + handle.xpath);
+        log.debug("\tXpathes generated. Started generating testing interactivity...\n");
+        for (WebHandle handle: allHandles){
+            log.info("XPATH for element being tested: " + handle.xpath);
             try {
+                baseState.reach(driver);
                 //###### Checking for cached result
                 ElementType cachedEltype = null;
-                //TODO remove "stress" testing of SQL
-                /**/    try {
-                /**/        cachedEltype = alphabet_testing.request(handle.url, handle.xpath);
-                /**/    } catch (Exception e) {
-                /**/        System.err.println("PostgreSQLAlphabet failed with: ");
-                /**/        e.printStackTrace(System.err);
-                /**/        System.err.println("    trying to Request deprecated MapAlphabet instead...");
-                /**/    }
-                if (cachedEltype != ElementType.unknown)
+                if ((cachedEltype = alphabet_testing.request(handle.url, handle.xpath)) != ElementType.unknown)
                     handle.eltype = cachedEltype;
                 else {
                     if(random.nextDouble() < 0.25) {
                         hashes.add(Utils.hashPage(driver));
                     }
                     handle.eltype = checkHandleType(driver, handle, hashes);
-                /**/        try {
-                /**/        alphabet_testing.addOrModify(handle);
-                /**/        } catch (Exception e) {
-                /**/           System.err.println("PostgreSQLAlphabet failed with: ");
-                /**/          e.printStackTrace(System.err);
-                /**/        }
-
+                    alphabet_testing.add(handle);
                 }
-            }catch (NoSuchElementException e){
+            }catch (ElementNotVisibleException | ElementNotFoundException | NoSuchElementException e){
                 //TODO: after hovering over button tooltip appears changing page structure(Extra div) => couldn't handle element.
+                log.error("failed while trying to get new hash");
+                log.exception(e);
                 continue;
             }
 
-//            System.err.println("Determined as " + handle.eltype.name() + "\n");
+          log.info("Determined as " + handle.eltype.name() + "\n");
             //TODO return writables, but don't forget terminal
 //                if(handle.eltype.equals(ElementType.clickable) || handle.eltype.equals(ElementType.writable)) {
             if (handle.eltype == ElementType.clickable || handle.eltype == ElementType.terminal || handle.eltype == ElementType.unknown) {
@@ -264,21 +248,19 @@ public class Scanner {
                 if (interactiveHandles.size() >= 20) return interactiveHandles; //#hardcode
             }
         }
-        System.err.printf("\tFound %d interactive elements.\n", interactiveHandles.size());
+        log.debug("\tFound %d interactive elements.\n" + interactiveHandles.size());
         return interactiveHandles;
     }
 
 
+    /**Further is left for testing at the moment*/
     public void testXpathSelector(){
         driver.get("http://localhost:8080/issues");
-        System.out.println(getAllXPATHs(driver).size());
-        System.out.println(getAllXPATHs(driver));
+        log.report(Integer.toString(getAllXPATHs(driver).size()));
     }
-    /**Left for testing at the moment*/
     public static void main(String args[]) throws MalformedURLException {
         Scanner scanner = new Scanner();
         scanner.testXpathSelector();
         scanner.close();
     }
-
 }

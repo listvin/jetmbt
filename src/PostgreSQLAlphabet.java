@@ -2,7 +2,9 @@
 import Boxes.State;
 import Common.ElementType;
 import Boxes.WebHandle;
+import Common.Logger;
 import com.sun.istack.internal.Nullable;
+import sun.rmi.runtime.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,6 +19,7 @@ import java.util.List;
  * Created by wimag on 7/29/15.
  */
 public class PostgreSQLAlphabet implements Alphabet {
+    private Logger log = new Logger(this, Logger.Level.debug, Logger.Level.all);
     private static String CONFIG = "DB.properties";
     private Connection c;
 
@@ -32,7 +35,8 @@ public class PostgreSQLAlphabet implements Alphabet {
             DBPASS = defaultProps.getProperty("DBUserPassword");
 
         } catch (IOException e) {
-            System.out.print("Couldn't fine properties settings file");
+            log.error("Couldn't fine properties settings file");
+            log.exception(e);
         }
 
         try {
@@ -41,64 +45,53 @@ public class PostgreSQLAlphabet implements Alphabet {
                     .getConnection("jdbc:postgresql://localhost:5432/"+DBNAME,
                             DBUSER, DBPASS);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(e.getClass().getName()+": "+e.getMessage());
-            System.exit(0);
+            log.exception(e);
+            log.error("Invoking System.exit(1) now...");
+            System.exit(-1);
         }
-        System.out.println("Opened database successfully");
+        log.report("Opened database successfully.");
     }
 
-    /**
-     *
-     * @param handles - add all elements from this list to alphabet DB
-     */
-    public void addHandles(List<WebHandle> handles) throws SQLException, ConflictingHandleStored {
-        for(WebHandle handle: handles){
-            add(handle);
-        }
-    }
+    public void add(URL url, String xpath, ElementType eltype) {
+        try {
+            Statement stmt = c.createStatement();
+            //SQL
 
-    /**
-     * Changes element type if similar element present in DB. Otherwise - creates it.
-     * @param handle - add handle to DB
-     */
-    public void addOrModify(WebHandle handle) throws SQLException {
-        Statement stmt = c.createStatement();
-        //SQL
-
-        ResultSet rs = stmt.executeQuery("SELECT * from handles WHERE url = '" + handle.url.toString() +
-                "' AND xpath = '" + handle.xpath + "'");
-        if(!rs.isBeforeFirst()){
-            stmt.executeUpdate("INSERT INTO handles (url, xpath, eltype) " +
-                    "VALUES ('" + handle.url.toString() + "','" + handle.xpath + "','" + handle.eltype.name() + "')");
-        }else{
-            System.out.println("UPDATE handles SET url='" + handle.url.toString() + "',xpath = '" + handle.xpath + "', eltype='" + handle.eltype.name() + "'" +
-                    "WHERE url = '" + handle.url.toString() + "' AND xpath = '" + handle.xpath + "'");
-            stmt.executeUpdate("UPDATE handles SET url='" + handle.url.toString() + "',xpath = '" + handle.xpath + "', eltype='" + handle.eltype.name() + "'" +
-                    "WHERE url = '" + handle.url.toString() + "' AND xpath = '" + handle.xpath + "'");
-        }
-        stmt.close();
-    }
-
-    public void add(URL url, String xpath, ElementType eltype) throws SQLException, ConflictingHandleStored {
-        //TODO remove this copypaste
-        Statement stmt = c.createStatement();
-        //SQL
-
-        ResultSet rs = stmt.executeQuery("SELECT * from handles WHERE url = '" + url +
-                "' AND xpath = '" + xpath + "'");
-        if(!rs.isBeforeFirst()){
-            stmt.executeUpdate("INSERT INTO handles (url, xpath, eltype) " +
-                    "VALUES ('" + url + "','" + xpath + "','" + eltype.name() + "')");
-        }else{
-            rs.next();
-            if(!rs.getString("eltype").equals(eltype.name())){
-                throw new ConflictingHandleStored();
+            ResultSet rs = stmt.executeQuery("SELECT * from handles WHERE url = '" + url.toString() +
+                    "' AND xpath = '" + xpath + "'");
+            if (!rs.isBeforeFirst()) {
+                stmt.executeUpdate("INSERT INTO handles (url, xpath, eltype) " +
+                        "VALUES ('" + url.toString() + "','" + xpath + "','" + eltype.name() + "')");
+            } else {
+                Logger.get(this).info("UPDATE handles SET url='" + url.toString() + "',xpath = '" + xpath + "', eltype='" + eltype.name() + "'" +
+                        "WHERE url = '" + url.toString() + "' AND xpath = '" + xpath + "'");
+                stmt.executeUpdate("UPDATE handles SET url='" + url.toString() + "',xpath = '" + xpath + "', eltype='" + eltype.name() + "'" +
+                        "WHERE url = '" + url.toString() + "' AND xpath = '" + xpath + "'");
             }
+            stmt.close();
+        } catch (SQLException e){
+            log.exception(e);
         }
-        stmt.close();
-
     }
+
+//    public void add(URL url, String xpath, ElementType eltype) throws SQLException, ConflictingHandleStored {
+//        Statement stmt = c.createStatement();
+//        //SQL
+//
+//        ResultSet rs = stmt.executeQuery("SELECT * from handles WHERE url = '" + url +
+//                "' AND xpath = '" + xpath + "'");
+//        if(!rs.isBeforeFirst()){
+//            stmt.executeUpdate("INSERT INTO handles (url, xpath, eltype) " +
+//                    "VALUES ('" + url + "','" + xpath + "','" + eltype.name() + "')");
+//        }else{
+//            rs.next();
+//            if(!rs.getString("eltype").equals(eltype.name())){
+//                throw new ConflictingHandleStored();
+//            }
+//        }
+//        stmt.close();
+//
+//    }
 
     /**
      * abort connection with DB
@@ -106,7 +99,7 @@ public class PostgreSQLAlphabet implements Alphabet {
     public void close(){
         try {
             c.close();
-            System.out.println("closed DB sucessfully");
+            Logger.get(this).report("Closed DB successfully.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -121,16 +114,20 @@ public class PostgreSQLAlphabet implements Alphabet {
      * @throws SQLException
      */
     @Override
-    public ElementType request(URL url, String xpath) throws SQLException {
-        Statement stmt = c.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * from handles WHERE url = '" + url +
-                "' AND xpath = '" + xpath + "'");
-        while (rs.next()){
-            String type = rs.getString("eltype");
+    public ElementType request(URL url, String xpath){
+        try {
+            Statement stmt = c.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * from handles WHERE url = '" + url +
+                    "' AND xpath = '" + xpath + "'");
+            while (rs.next()) {
+                String type = rs.getString("eltype");
+                stmt.close();
+                return ElementType.valueOf(type);
+            }
             stmt.close();
-            return ElementType.valueOf(type);
+        } catch (SQLException e){
+            log.exception(e);
         }
-        stmt.close();
         return ElementType.unknown;
     }
 
@@ -141,16 +138,20 @@ public class PostgreSQLAlphabet implements Alphabet {
      * @return
      * @throws SQLException
      */
-    public List<String> getHashesByURL(URL url) throws SQLException {
-        Statement stmt = c.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM urls WHERE url = '" + url.toString() + "'");
-        List<String> hashes = new ArrayList<String>();
-        while(rs.next()){
-            hashes.add(rs.getString("hash"));
+    public List<String> getHashesByURL(URL url){
+        try {
+            Statement stmt = c.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM urls WHERE url = '" + url.toString() + "'");
+            List<String> hashes = new ArrayList<String>();
+            while (rs.next()) {
+                hashes.add(rs.getString("hash"));
+            }
+            stmt.close();
+            return hashes;
+        } catch (SQLException e){
+            log.exception(e);
         }
-        stmt.close();
-        return hashes;
-
+        return new ArrayList<>();
     }
 
     /**
@@ -159,40 +160,45 @@ public class PostgreSQLAlphabet implements Alphabet {
      * @param hash - value "MyLittleDefaultHash" is used to marke unparseg pages
      * @throws SQLException
      */
-    public void addURL(URL url, String hash) throws SQLException {
-        Statement stmt = c.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * from urls WHERE url = '" + url.toString() +
-                "' AND hash = '" + hash + "'");
-        if(!rs.isBeforeFirst()){
-            stmt.executeUpdate("INSERT INTO urls (url, hash) " +
-                    "VALUES ('" + url.toString() + "','" + hash + "')");
+    public void addURL(URL url, String hash){
+        try {
+            Statement stmt = c.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * from urls WHERE url = '" + url.toString() +
+                    "' AND hash = '" + hash + "'");
+            if (!rs.isBeforeFirst()) {
+                stmt.executeUpdate("INSERT INTO urls (url, hash) " +
+                        "VALUES ('" + url.toString() + "','" + hash + "')");
+            }
+            stmt.close();
+        } catch (SQLException e){
+            log.exception(e);
         }
-        stmt.close();
     }
 
     @Nullable
-    public URL getRandomURL() throws SQLException, MalformedURLException {
-        Statement stmt = c.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT DISTINCT url FROM urls");
-        List<String> urls = new ArrayList<>();
-        if(!rs.isBeforeFirst()){
-            return null;
+    public URL getRandomURL() {
+        try {
+            Statement stmt = c.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT DISTINCT url FROM urls");
+            List<String> urls = new ArrayList<>();
+            if (!rs.isBeforeFirst()) {
+                return null;
+            }
+            while (rs.next()) {
+                urls.add(rs.getString("url"));
+            }
+            Random random = new Random();
+            return new URL(urls.get(random.nextInt(urls.size())));
+        } catch (SQLException | MalformedURLException e){
+            log.exception(e);
         }
-        while (rs.next()){
-            urls.add(rs.getString("url"));
-        }
-        Random random = new Random();
-        return new URL(urls.get(random.nextInt(urls.size())));
+        return null;
     }
     //for testing purposes only
     public static void main(String args[]) throws MalformedURLException, SQLException {
         PostgreSQLAlphabet alphabet = new PostgreSQLAlphabet();
         WebHandle handle = new WebHandle(new URL("http://vk.com"), "//html[1]", ElementType.clickable);
-        try {
-            alphabet.add(handle);
-        } catch (ConflictingHandleStored conflictingHandleStored) {
-            conflictingHandleStored.printStackTrace();
-        }
+        alphabet.add(handle);
         alphabet.close();
     }
 }

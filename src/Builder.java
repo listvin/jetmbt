@@ -2,6 +2,7 @@ import Boxes.EFG;
 import Boxes.Event;
 import Boxes.Sequence;
 import Boxes.State;
+import Common.Logger;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -13,7 +14,9 @@ import java.util.concurrent.BlockingQueue;
  * Created by listvin on 7/23/15.
  */
 public class Builder {
+    private static Builder me = new Builder();
     private static Scanner scanner;
+    private Logger log = new Logger(this, Logger.Level.debug);
     static EFG g;
 
     /**@param args Use --url url_to_parse or --file file_to_load_graph_from.*/
@@ -27,14 +30,14 @@ public class Builder {
         switch (args[0]){
             case "--url":
                 g = new EFG();
-                dfs(Event.createTerminal("BUILDINGROOT"), new State(new URL(args[1]), new Sequence()), 0); //#hardcode
+                me.dfs(Event.createTerminal("BUILDINGROOT"), new State(new URL(args[1]), new Sequence()), 0); //#hardcode
                 break;
             case "--file":
                 g = new EFG(args[1]);
                 /*Event start = g.pickStart();
                 if (start == null) assert false : "this graph is finished";*/
                 //lol, null here seems to be really dangerous guy!
-                    dfs(Event.createTerminal("BUILDINGROOT"), new State(null, new Sequence()), 0); //#hardcode
+                    me.dfs(Event.createTerminal("BUILDINGROOT"), new State(null, new Sequence()), 0); //#hardcode
                 break;
             default:
                 System.err.print("Use --url <url to parse> or --file <file to load graph from>");
@@ -49,10 +52,12 @@ public class Builder {
     /**
      * @param prev - this called "prev" because in browser this event was already performed. For simple dfs 
      */
-    private static void dfs(Event prev, State cur, int depth){
+    private void dfs(Event prev, State cur, int depth){
         prev.setTicked(); //for now (for building) let's make it classic, with touring by nodes instead of edges.
 
-        System.out.print("DFS:"); for (int i = 0; i < depth; ++i) System.out.printf("_%2d_", i); System.out.printf("Last event: %s | %s\n", prev.handle.url, prev.handle.xpath);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < depth; ++i) sb.append(String.format("_%2d_", i));
+        log.debug(String.format("DFS: %s (%s | %s)\n", sb.toString(), prev.handle.url, prev.handle.xpath));
 
         if (g.isScannedOnce(prev)) {
             if (prev.handle.isAssignedToUrl())

@@ -1,3 +1,4 @@
+import Common.Logger;
 import Common.Utils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -18,6 +19,7 @@ import static Common.Utils.sleep;
  * Created by wimag on 7/30/15.
  */
 public class URLHasher implements Runnable{
+    private Logger log = new Logger(this, Logger.Level.off, Logger.Level.all);
     protected BlockingQueue<URL> URLQueue = null;
     WebDriver driver = null;
     Alphabet alphabet = null;
@@ -35,7 +37,7 @@ public class URLHasher implements Runnable{
                 URL url = URLQueue.poll(1000, TimeUnit.MILLISECONDS);
                 if(url != null){
                     driver.get(url.toString());
-//                    System.out.println("Aquired " + url.toString() + " as a Hash url parameter");
+                    log.report("Acquired " + url.toString() + " as a Hash url parameter.");
                     String hash = hashPage(driver);
                     alphabet.addURL(url, hash);
                 }else{
@@ -44,15 +46,15 @@ public class URLHasher implements Runnable{
                         sleep(200);
                         continue;
                     }
-//                    System.out.println("Chosen " + update.toString() + " as a Hash url parameter");
+                    log.debug("Chosen " + update.toString() + " as a Hash url parameter.");
                     driver.get(update.toString());
                     String hash = hashPage(driver);
                     alphabet.addURL(update, hash);
                 }
                 sleep(3000);
             }
-        }catch (InterruptedException | SQLException | MalformedURLException e){
-            e.printStackTrace();
+        }catch (InterruptedException e){
+            log.exception(e);
         }
     }
 

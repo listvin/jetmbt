@@ -1,5 +1,6 @@
 package Boxes;
 
+import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
 
@@ -38,7 +39,7 @@ public class State {
      * This reaches state stored inside. First goes to the URL, then plays sequence
      * @param driver WebDriver to come to state in.
      */
-    public void reach(WebDriver driver) throws NoSuchElementException, InvalidSelectorException{
+    public void reach(WebDriver driver) throws ElementNotVisibleException, NoSuchElementException, InvalidSelectorException{
         driver.get(url.toString());
         sequence.play(driver);
     }

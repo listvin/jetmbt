@@ -2,6 +2,7 @@ package Boxes;
 
 import Common.ElementType;
 import Common.GraphDumper;
+import Common.Logger;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -18,6 +19,7 @@ import java.util.*;
  * Created by listvin on 7/23/15.
  */
 public class EFG {
+    private Logger log = new Logger(this, Logger.Level.debug);
     private GraphDumper dumper = new GraphDumper();
     private Random random = new Random(239);
     private Map<Event, EdgeList> adjList = new HashMap<>();
@@ -26,10 +28,8 @@ public class EFG {
         try {
             dumper.parseFile(this, path);
         } catch (IOException e) {
-            e.printStackTrace(System.err);
+            log.exception(e);
         }
-//        for (Map.Entry<Event, EdgeList> entry : adjList.entrySet()) //#hardcode - so, we are loading graph not for building only
-//            if (entry.getValue().size() > 0) entry.getKey().setTicked();
     }
 
     //TODO turn this in use instead of builder's inside search with check through isScannedOnce(Event)
@@ -122,10 +122,10 @@ public class EFG {
             for (Event node : adjList.keySet())
                 for (Edge edge : adjList.get(node))
                     dumper.addEdgeFromTo(node, edge.destination);
-            System.out.print("\u001B[32;1m\"" + dumper.closeFile() + ".gv\"\u001B[0m\u001B[32m have been wrote to graphs folder.\n" + "\u001B[0m");
+            log.report(dumper.closeFile() + ".gv have been wrote to graphs folder.");
             return true;
         } catch (Exception e){
-            e.printStackTrace(System.err);
+            log.exception(e);
             return false;
         }
     }
