@@ -4,13 +4,17 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by user on 7/23/15.
  */
 public class Selectors {
+
     public static String formXPATH(WebDriver driver, WebElement element){
-        return (String) ((JavascriptExecutor) driver).executeScript(
-                "function absoluteXPath(element) {"+
+        return (String) ((JavascriptExecutor) driver).executeScript("function absoluteXPath(element) {"+
                         "var comp, comps = [];"+
                         "var parent = null;"+
                         "var xpath = '';"+
@@ -65,5 +69,64 @@ public class Selectors {
 
                         "} return absoluteXPath(arguments[0]);", element);
 
+    }
+
+    public static List<String> getAllXPATHs(WebDriver driver){
+        Object response = (((JavascriptExecutor) driver).executeScript("/**\n" +
+                        " * Created by user on 8/7/15.\n" +
+                        " */\n" +
+                        "\n" +
+                        "getElementTreeXPath = function(element)\n" +
+                        "{\n" +
+                        "    var paths = [];\n" +
+                        "\n" +
+                        "    // Use nodeName (instead of localName) so namespace prefix is included (if any).\n" +
+                        "    for (; element && element.nodeType == 1; element = element.parentNode)\n" +
+                        "    {\n" +
+                        "        var index = 0;\n" +
+                        "        for (var sibling = element.previousSibling; sibling; sibling = sibling.previousSibling)\n" +
+                        "        {\n" +
+                        "            // Ignore document type declaration.\n" +
+                        "            if (sibling.nodeType == Node.DOCUMENT_TYPE_NODE)\n" +
+                        "                continue;\n" +
+                        "\n" +
+                        "            if (sibling.nodeName == element.nodeName)\n" +
+                        "                ++index;\n" +
+                        "        }\n" +
+                        "\n" +
+                        "        var tagName = element.nodeName.toLowerCase();\n" +
+                        "        var pathIndex = (index ? \"[\" + (index+1) + \"]\" : \"\");\n" +
+                        "        paths.splice(0, 0, tagName + pathIndex);\n" +
+                        "    }\n" +
+                        "\n" +
+                        "    return paths.length ? \"/\" + paths.join(\"/\") : null;\n" +
+                        "};\n" +
+                        "\n" +
+                        "getElementXPath = function(element)\n" +
+                        "{\n" +
+                        "    if (element && element.id)\n" +
+                        "        return '//*[@id=\"' + element.id + '\"]';\n" +
+                        "    else\n" +
+                        "        return this.getElementTreeXPath(element);\n" +
+                        "};\n" +
+                        "\n" +
+                        "\n" +
+                        "var nodes = [];\n" +
+                        "\n" +
+                        "try {\n" +
+                        "    var result = document.evaluate(\"//*\", document, null, XPathResult.ANY_TYPE, null);\n" +
+                        "    var item;\n" +
+                        "    while ((item = result.iterateNext()) != null)\n" +
+                        "        nodes.push(getElementXPath(item));\n" +
+                        "}\n" +
+                        "catch (exc)\n" +
+                        "{\n" +
+                        "    // Invalid xpath expressions make their way here sometimes.  If that happens,\n" +
+                        "    // we still want to return an empty set without an exception.\n" +
+                        "}\n" +
+                        "    return nodes;\n" +
+                        "\n"
+        ));
+        return (ArrayList<String>) response;
     }
 }

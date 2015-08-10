@@ -15,6 +15,8 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
+import static Common.Selectors.*;
+
 /**
  * Created by wimag on 7/23/15.
  */
@@ -173,7 +175,7 @@ public class Scanner {
                 baseState.url.toString(), baseState.sequence.size(), elementList.size());
 
         //TODO remove threshold for count of generated xpathes per scan session
-        int i = 0, xpathsThreshold = 80; //#hardcode
+        //int i = 0, xpathsThreshold = 80; //#hardcode
         URL curUrl = null;
         try {
             curUrl = new URL(driver.getCurrentUrl());
@@ -190,14 +192,19 @@ public class Scanner {
 
         }
 
+        //Testing faster ways
+//        for(WebElement element: elementList){
+//            if(!element.isDisplayed() || !element.isEnabled()) continue;
+//            String xpath = formXPATH(driver, element);
+//            WebHandle handle = new WebHandle(curUrl, xpath);
+//            allHandles.add(handle);
+//            if (++i > xpathsThreshold) break;
+//        }
 
-        for(WebElement element: elementList){
-            if(!element.isDisplayed() || !element.isEnabled()) continue;
-            String xpath = Selectors.formXPATH(driver, element);
-            WebHandle handle = new WebHandle(curUrl, xpath);
-            allHandles.add(handle);
-            if (++i > xpathsThreshold) break;
+        for(String xpath: Selectors.getAllXPATHs(driver)){
+            allHandles.add(new WebHandle(curUrl, xpath));
         }
+
         List<String> hashes = new ArrayList<>(Collections.singletonList(oldHash));
         Random random = new Random(System.currentTimeMillis());
         if(URLQueue != null){
@@ -236,7 +243,7 @@ public class Scanner {
                     }
                     handle.eltype = checkHandleType(driver, handle, hashes);
                 /**/        try {
-                /**/        alphabet_testing.add(handle);
+                /**/        alphabet_testing.addOrModify(handle);
                 /**/        } catch (Exception e) {
                 /**/           System.err.println("PostgreSQLAlphabet failed with: ");
                 /**/          e.printStackTrace(System.err);
@@ -261,14 +268,16 @@ public class Scanner {
         return interactiveHandles;
     }
 
+
+    public void testXpathSelector(){
+        driver.get("http://localhost:8080/issues");
+        System.out.println(getAllXPATHs(driver).size());
+        System.out.println(getAllXPATHs(driver));
+    }
     /**Left for testing at the moment*/
     public static void main(String args[]) throws MalformedURLException {
         Scanner scanner = new Scanner();
-        State baseState = new State(new URL("http://localhost:8080/dashboard"), new Sequence());
-        ArrayList<WebHandle> ints = new ArrayList<>(scanner.scan(baseState));
-        for(WebHandle handle: ints){
-            System.out.println(handle.xpath + " " + handle.eltype.name());
-        }
+        scanner.testXpathSelector();
         scanner.close();
     }
 
