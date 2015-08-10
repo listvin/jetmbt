@@ -18,13 +18,12 @@ import java.util.regex.Pattern;
  */
 public class GraphDumper {
     private Runtime runtime = Runtime.getRuntime();
-    public final String folderName;
+    public final String folderName, path;
     private Integer dumpNum = 0;
     public GraphDumper() {
-        folderName = "graphs/" + (new SimpleDateFormat("ddMMMyyyy_EEE_HH%1mm%2ss.SSS%3"))
-                .format(new Date()).toLowerCase()
-                .replace("%1", "h").replace("%2", "m").replace("%3", "s") + "/"; //#hardcode
-        String[] args = {"mkdir", folderName}; //#hardcode
+        folderName = Logger.getFolderTimeName();
+        path = "graphs/" + folderName + "/";
+        String[] args = {"mkdir", path}; //#hardcode
         try {
             runtime.exec(args).waitFor();
         } catch (InterruptedException | IOException e) {
@@ -121,7 +120,7 @@ public class GraphDumper {
     public void initFile() throws FileNotFoundException, UnsupportedEncodingException{
         assert writer == null : "Have not closed file";
         String name = generateNewName();
-        writer = new PrintWriter(folderName + name + ".gv", "UTF-8");
+        writer = new PrintWriter(path + name + ".gv", "UTF-8");
         writer.printf("digraph EFG {\n" +
                 "\tnode [shape=plaintext]\n");
     }
