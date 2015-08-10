@@ -90,4 +90,6 @@ public interface Alphabet {
      * @throws SQLException
      */
     URL getRandomURL() throws SQLException, MalformedURLException;
+
+    public void addOrModify(WebHandle handle) throws SQLException;
 }
