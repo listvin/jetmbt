@@ -19,7 +19,7 @@ import java.net.URL;
  * Created by user on 7/23/15.
  */
 public class WebHandle {
-    private Logger log = Logger.get(new WebHandle(Utils.createOwn404(), ""));
+    private static Logger log = Logger.get(new WebHandle(Utils.createOwn404(), ""));
     public final URL url;
     public final String xpath;
     private final int hash;
