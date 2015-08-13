@@ -189,9 +189,15 @@ public class Scanner {
 
                 //###### Checking for cached result
                     ElementType cachedEltype = null;
-                    if ((cachedEltype = alphabet.request(handle.url, handle.xpath)) != ElementType.unknown)
+                    if ((cachedEltype = alphabet.request(handle.url, handle.xpath)) != ElementType.unknown) {
                         handle.eltype = cachedEltype;
-                    else {
+                        if(handle.eltype == ElementType.clickable || handle.eltype == ElementType.writable) {
+                            WebElement elem = handle.findElement(driver);
+                            if ((elem == null) || !elem.isDisplayed() || !elem.isEnabled()) {
+                                handle.eltype = ElementType.noninteractive;
+                            }
+                        }
+                    } else {
                         //###### initial state replay
                             try {
                                 baseState.reach(driver);
