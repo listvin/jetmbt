@@ -13,6 +13,7 @@ public class Logger implements Closeable{
     public enum Level {all, info/*blue*/, debug/*yell*/, warning/*yell*/, error/*red*/, report/*green*/, off}
     private static String folderName = "", path;
     private static HashMap<Object, Logger> mem = new HashMap<>();
+
     private Level file, console;
     private PrintStream printer;
     private String name;
@@ -68,15 +69,16 @@ public class Logger implements Closeable{
     }
         
     private SimpleDateFormat hhmmsssss = new SimpleDateFormat("[HH:mm:ss.SSS]: ");
-
     private void printMessage(String color, String LVL, String text, Level threshold){
         String stamp = hhmmsssss.format(new Date());
-        if (threshold.compareTo(console) >= 0) System.out.println(
+        if (threshold.compareTo(console) >= 0)
+            System.out.println(
                 "\u001B[" + color + ";1m" + LVL + stamp + "\u001B[0m" +
                 "\u001B[" + color + "m" + "(by " + name + ") " + "\u001B[0m" +
                 text +
                 "\u001B[" + color + ";1m\n^^^^^^^^^^^^^^^^^^\u001B[0m");
-        if (threshold.compareTo(file) >= 0) printer.println(
+        if (threshold.compareTo(file) >= 0)
+            printer.println(
                 LVL + stamp +
                 text +
                 "\n~~~~~~~~~~~~~~~~~~\n");

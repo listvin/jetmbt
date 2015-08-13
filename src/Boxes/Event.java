@@ -3,18 +3,12 @@ package Boxes;
 import Common.ElementType;
 import Common.Logger;
 import Common.Utils;
-import org.openqa.selenium.ElementNotVisibleException;
-import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import sun.rmi.runtime.Log;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * WARNING! All factories of instances of this class guarantee, that there won't be generated
@@ -78,7 +72,7 @@ public class Event extends Tickable{
      * @param driver WebDriver to perform in
      * @return true in case of success (Element existed and was visible)
      */
-    public boolean perform(WebDriver driver){ return perform(handle, driver); }
+    public boolean perform(WebDriver driver){ return perform(handle, driver, false); }
 
     /**
      * This static one is pretty useful for using from inside of checker in Scanner, cause Event can't be
@@ -88,16 +82,16 @@ public class Event extends Tickable{
      * @return true in case of success (Element existed and was visible)
      */
     //TODO this requires redesign for writables
-    public static boolean perform(WebHandle handle, WebDriver driver){
+    public static boolean perform(WebHandle handle, WebDriver driver, boolean test){
         WebElement we = handle.findElement(driver);
         if (we == null){
             //TODO this place strongly interferes with driver's implicitly wait. So, I think, personal fails counter per handle needed.
-            log.error(handle.url.toString() + "|" + handle.xpath + "\n" +
+            if (!test) log.error(handle.url.toString() + " | " + handle.xpath + "\n" +
                     "Unable to .perform(WebDriver), cause search of element by stored selector is failed.");
             return false;
         }
         if (!we.isDisplayed() || !we.isEnabled()){
-            log.error(handle.url.toString() + "|" + handle.xpath + "\n" +
+            if (!test) log.error(handle.url.toString() + " | " + handle.xpath + "\n" +
                     "Failed to .perform(WebDriver), cause element not displayed or not enabled.");
             return false;
         }

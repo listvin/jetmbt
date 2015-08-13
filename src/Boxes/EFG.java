@@ -35,6 +35,12 @@ public class EFG {
 
     //TODO turn this in use instead of builder's inside search with check through isScannedOnce(Event)
     public Event pickStart(){
+		//1. Search for all unticked nodes
+		//2. Search for all assigned nodes
+		//3a. Dijkstrate from one assigned to all
+		//3b. Dijkstrate from one unticked to all
+		//4. Choose shortest route
+		//5. Create (and return) State with this route inside
         for (Event node : adjList.keySet())
             if (!node.isTicked()){
                 node.setTicked();

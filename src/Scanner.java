@@ -19,7 +19,7 @@ import static Common.Selectors.*;
  */
 public class Scanner {
     private Random random = new Random(Common.Settings.randomSeed);
-    private Logger log = new Logger(this, Logger.Level.debug, Logger.Level.all);
+    private Logger log = new Logger(this, Logger.Level.warning, Logger.Level.warning);
     private WebDriver driver;
     private Alphabet alphabet;
     private BlockingQueue<URL> URLQueue = null;
@@ -68,7 +68,7 @@ public class Scanner {
             String oldWindowHandle = driver.getWindowHandle();
 
             //###### Performing action
-            Event.perform(handle, driver);
+            Event.perform(handle, driver, false);
 
             //###### Check if alert window exists
             if (ExpectedConditions.alertIsPresent().apply(driver) != null){
@@ -193,10 +193,11 @@ public class Scanner {
                         handle.eltype = cachedEltype;
                         if(handle.eltype == ElementType.clickable || handle.eltype == ElementType.writable) {
                             WebElement elem = handle.findElement(driver);
-                            if ((elem == null) || !elem.isDisplayed() || !elem.isEnabled()) {
+                            if (elem == null || !elem.isDisplayed() || !elem.isEnabled()) {
                                 handle.eltype = ElementType.noninteractive;
                             }
                         }
+                        log.info("Fetched from cache as " + handle.eltype.name() + "\n");
                     } else {
                         //###### initial state replay
                             try {
@@ -219,9 +220,9 @@ public class Scanner {
                         //###### now checking
                             handle.eltype = checkHandleType(driver, handle, oldHashes);
                         //###### caching
-                            alphabet.add(handle);
+                        alphabet.add(handle);
+                        log.info("Determined as " + handle.eltype.name() + "\n");
                     }
-                log.info("Determined as " + handle.eltype.name() + "\n");
 
                 //###### preparing list of WebHandles for return
                     //TODO return writables, but don't forget terminal
@@ -230,7 +231,7 @@ public class Scanner {
                         case clickable: case terminal: case unknown: interactiveHandles.add(handle); break;
                     }
             }
-        log.debug("Classified " + interactiveHandles.size() + " elements.\n");
+        log.report("Classified " + interactiveHandles.size() + " elements.\n");
 
         //###### finally, returning
             return interactiveHandles;

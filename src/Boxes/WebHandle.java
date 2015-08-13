@@ -19,6 +19,7 @@ import java.net.URL;
  * Created by user on 7/23/15.
  */
 public class WebHandle {
+    private Logger log = Logger.get(new WebHandle(Utils.createOwn404(), ""));
     public final URL url;
     public final String xpath;
     private final int hash;
@@ -62,13 +63,13 @@ public class WebHandle {
      */
     public WebElement findElement(WebDriver driver){
         if(!driver.getCurrentUrl().equals(url.toString())) {
-            Logger.get(this).error("URL, opened in drier, given to .findElement(WebDriver) is not corresponds to stored url");
+            log.error("URL, opened in driver, given to .findElement(WebDriver) is not corresponds to stored url");
             return null;
         }
         try {
             return driver.findElement(By.xpath(xpath));
         } catch (NoSuchElementException e){
-            Logger.get(this).exception(e);
+//            log.exception(e);
             return null;
         }
     }
