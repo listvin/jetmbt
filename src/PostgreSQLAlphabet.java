@@ -3,6 +3,7 @@ import Boxes.State;
 import Common.ElementType;
 import Boxes.WebHandle;
 import Common.Logger;
+import Common.Utils;
 import com.sun.istack.internal.Nullable;
 import sun.rmi.runtime.Log;
 
@@ -44,14 +45,17 @@ public class PostgreSQLAlphabet implements Alphabet {
             c = DriverManager
                     .getConnection("jdbc:postgresql://localhost:5432/"+DBNAME,
                             DBUSER, DBPASS);
+			log.report("Opened database successfully.");
         } catch (Exception e) {
             log.exception(e);
-            log.error("Invoking System.exit(1) now...");
-            System.exit(-1);
+            log.error("System.exit(-1) here was commented by listvin. (Ask wimag for details)");
+//            System.exit(-1);
         }
-        log.report("Opened database successfully.");
     }
 
+	/**
+	 * Adds given triplet of url-xpath-eltype to db of elemtnts (aka AlphabetDB)
+	 */
     public void add(URL url, String xpath, ElementType eltype) {
         try {
             Statement stmt = c.createStatement();
@@ -74,44 +78,25 @@ public class PostgreSQLAlphabet implements Alphabet {
         }
     }
 
-//    public void add(URL url, String xpath, ElementType eltype) throws SQLException, ConflictingHandleStored {
-//        Statement stmt = c.createStatement();
-//        //SQL
-//
-//        ResultSet rs = stmt.executeQuery("SELECT * from handles WHERE url = '" + url +
-//                "' AND xpath = '" + xpath + "'");
-//        if(!rs.isBeforeFirst()){
-//            stmt.executeUpdate("INSERT INTO handles (url, xpath, eltype) " +
-//                    "VALUES ('" + url + "','" + xpath + "','" + eltype.name() + "')");
-//        }else{
-//            rs.next();
-//            if(!rs.getString("eltype").equals(eltype.name())){
-//                throw new ConflictingHandleStored();
-//            }
-//        }
-//        stmt.close();
-//
-//    }
-
     /**
-     * abort connection with DB
+     * Closes connection with DB
      */
     public void close(){
         try {
             c.close();
             Logger.get(this).report("Closed DB successfully.");
         } catch (SQLException e) {
-            e.printStackTrace();
+            Logger.get(this).report("Failed to close connection with db.");
+            Logger.get(this).exception(e);
         }
     }
 
 
     /**
-     *
-     * @param url - url to be found in database
-     * @param xpath - xpath to be found in database
-     * @return - element type of this handle. unknown if never encountered
-     * @throws SQLException
+     * Performs search in db by url, xpath
+     * @param url - url to search for database
+     * @param xpath - xpath to search for in database
+     * @return - ElementType of this handle. Unknown if not found in db.
      */
     @Override
     public ElementType request(URL url, String xpath){
@@ -133,9 +118,9 @@ public class PostgreSQLAlphabet implements Alphabet {
 
 
     /**
-     * get all hashes associated with url
+     * Get all hashes associated with url
      * @param url
-     * @return
+     * @return List of Strings, each String is hash of the page layout loaded by the url
      * @throws SQLException
      */
     public List<String> getHashesByURL(URL url){
@@ -143,15 +128,13 @@ public class PostgreSQLAlphabet implements Alphabet {
             Statement stmt = c.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM urls WHERE url = '" + url.toString() + "'");
             List<String> hashes = new ArrayList<String>();
-            while (rs.next()) {
-                hashes.add(rs.getString("hash"));
-            }
+            while (rs.next()) hashes.add(rs.getString("hash"));
             stmt.close();
             return hashes;
         } catch (SQLException e){
             log.exception(e);
+			return new ArrayList<>();
         }
-        return new ArrayList<>();
     }
 
     /**
@@ -187,9 +170,9 @@ public class PostgreSQLAlphabet implements Alphabet {
             while (rs.next()) {
                 urls.add(rs.getString("url"));
             }
-            Random random = new Random();
-            return new URL(urls.get(random.nextInt(urls.size())));
-        } catch (SQLException | MalformedURLException e){
+            Random random = new Random(Common.Settings.randomSeed);
+            return Utils.createURL(urls.get(random.nextInt(urls.size())));
+        } catch (SQLException e){
             log.exception(e);
         }
         return null;
@@ -197,7 +180,7 @@ public class PostgreSQLAlphabet implements Alphabet {
     //for testing purposes only
     public static void main(String args[]) throws MalformedURLException, SQLException {
         PostgreSQLAlphabet alphabet = new PostgreSQLAlphabet();
-        WebHandle handle = new WebHandle(new URL("http://vk.com"), "//html[1]", ElementType.clickable);
+        WebHandle handle = new WebHandle(Utils.createURL("http://vk.com"), "//html[1]", ElementType.clickable);
         alphabet.add(handle);
         alphabet.close();
     }

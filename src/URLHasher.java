@@ -21,17 +21,15 @@ import static Common.Utils.sleep;
 public class URLHasher implements Runnable{
     private Logger log = new Logger(this, Logger.Level.off, Logger.Level.all);
     protected BlockingQueue<URL> URLQueue = null;
-    WebDriver driver = null;
-    Alphabet alphabet = null;
+    WebDriver driver;
+    Alphabet alphabet;
     public URLHasher(BlockingQueue queue){
         this.URLQueue = queue;
-        driver = new FirefoxDriver();
-        Utils.setUpDriver(driver);
+        Utils.setUpDriver(driver = new FirefoxDriver());
         alphabet = new PostgreSQLAlphabet();
     }
-
+    
     public void run(){
-
         try {
             while(true){
                 URL url = URLQueue.poll(1000, TimeUnit.MILLISECONDS);

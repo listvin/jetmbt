@@ -1,10 +1,13 @@
 package Boxes;
 
 import Common.ElementType;
+import Common.Logger;
 import Common.Utils;
 import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import sun.rmi.runtime.Log;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -24,6 +27,7 @@ import java.util.NoSuchElementException;
  * Created by user on 7/23/15.
  */
 public class Event extends Tickable{
+    private static Logger log = Logger.get(new Event(new WebHandle(Utils.createOwn404(), ""), null));
     /**This implements "memory-management" claimed above.*/
     private static HashMap<Event, Event> memory = new HashMap<>();
 
@@ -50,12 +54,7 @@ public class Event extends Tickable{
 
     /**Factory method for convenient creating of fake element. Will be terminal*/
     public static Event createTerminal(String name){
-        try{
-            return creationFinalizer(new Event(new WebHandle(new URL("http://github.com/404"), name, ElementType.terminal), "")); //#hardcode
-        }catch (MalformedURLException ignored){
-            //Hardcoded URL can't be malformed.. I think..
-            return null;
-        }
+        return creationFinalizer(new Event(new WebHandle(Utils.createOwn404(), name, ElementType.terminal), "")); //#hardcode
     }
 
     public static Event create(WebHandle handle, String context){
@@ -77,14 +76,38 @@ public class Event extends Tickable{
 
     /**Performs event in specified WebDriver
      * @param driver WebDriver to perform in
+     * @return true in case of success (Element existed and was visible)
      */
-    public void perform(WebDriver driver) throws ElementNotVisibleException, NoSuchElementException, InvalidSelectorException{
-        switch (handle.eltype){
-            case clickable: handle.findElement(driver).click(); break;
-            case writable: handle.findElement(driver).sendKeys(context); break;
-            case terminal: assert false : "terminal elements was touched"; break;
-            default: assert false : "this shouldn't have happened"; break;
+    public boolean perform(WebDriver driver){ return perform(handle, driver); }
+
+    /**
+     * This static one is pretty useful for using from inside of checker in Scanner, cause Event can't be
+     * constructed in that moment. For other usage refer to {@link #perform(WebDriver)}
+     * @param driver WebDriver to perform in
+     * @param handle handle with which event will be performed
+     * @return true in case of success (Element existed and was visible)
+     */
+    //TODO this requires redesign for writables
+    public static boolean perform(WebHandle handle, WebDriver driver){
+        WebElement we = handle.findElement(driver);
+        if (we == null){
+            //TODO this place strongly interferes with driver's implicitly wait. So, I think, personal fails counter per handle needed.
+            log.error(handle.url.toString() + "|" + handle.xpath + "\n" +
+                    "Unable to .perform(WebDriver), cause search of element by stored selector is failed.");
+            return false;
         }
+        if (!we.isDisplayed() || !we.isEnabled()){
+            log.error(handle.url.toString() + "|" + handle.xpath + "\n" +
+                    "Failed to .perform(WebDriver), cause element not displayed or not enabled.");
+            return false;
+        }
+        switch (handle.eltype){
+            case clickable: we.click(); break;
+            //case writable: we.sendKeys(context); break;
+            case terminal: assert false : "terminal elements was touched"; break;
+            default: assert false : "this shouldn't have happened???"; break;
+        }
+        return true;
     }
 
     @Override

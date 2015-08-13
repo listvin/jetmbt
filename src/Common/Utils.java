@@ -14,6 +14,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
@@ -43,9 +45,10 @@ public class Utils {
      * As you can see above overflow is used instead of taking modulo...
      * Base here is 257.
      * @param s string for hashing
-     * @return returned int is ok to override native .hsahCode()
+     * @return returned int is ok to override native .hashCode()
      */
     public static int hashString(String s){
+        if (s == null) return 0;
         final int base = 257;
         int powed = 1, result = 0;
         for (Character c : s.toCharArray()) {
@@ -115,9 +118,9 @@ public class Utils {
      * @param driver
      */
     public static void setUpDriver(WebDriver driver){
-        driver.manage().timeouts().implicitlyWait(2, TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
-        driver.manage().timeouts().setScriptTimeout(2, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(750, TimeUnit.MILLISECONDS);
+        driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
+        //driver.manage().timeouts().setScriptTimeout(15, TimeUnit.SECONDS);
 
 
         //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
@@ -127,5 +130,19 @@ public class Utils {
         driver.findElement(By.id("id_l.L.login")).sendKeys("root");
         driver.findElement(By.id("id_l.L.password")).sendKeys("root");
         driver.findElement(By.id("id_l.L.loginButton")).click();
+    }
+
+    /**Factory for URL with suppressed MalformedURLException (in most cases in this project, we are sure that URL isn't malformed)*/
+    public static URL createURL(String url){
+        try {
+            return new URL(url);
+        } catch (MalformedURLException e){
+            log.exception(e);
+            return null;
+        }
+    }
+
+    public static URL createOwn404(){
+        return createURL("https://github.com/404");
     }
 }

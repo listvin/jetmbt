@@ -21,7 +21,7 @@ import java.util.*;
 public class EFG {
     private Logger log = new Logger(this, Logger.Level.debug);
     private GraphDumper dumper = new GraphDumper();
-    private Random random = new Random(239);
+    private Random random = new Random(Common.Settings.randomSeed);
     private Map<Event, EdgeList> adjList = new HashMap<>();
     public EFG(){}
     public EFG(String path){
@@ -29,6 +29,7 @@ public class EFG {
             dumper.parseFile(this, path);
         } catch (IOException e) {
             log.exception(e);
+            System.exit(-1);
         }
     }
 

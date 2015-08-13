@@ -38,10 +38,12 @@ public class State {
     /**
      * This reaches state stored inside. First goes to the URL, then plays sequence
      * @param driver WebDriver to come to state in.
+     * @return true in case of success
      */
-    public void reach(WebDriver driver) throws ElementNotVisibleException, NoSuchElementException, InvalidSelectorException{
+    public boolean reach(WebDriver driver){
         driver.get(url.toString());
-        sequence.play(driver);
+        if (!sequence.play(driver)) return false;
+        return true;
     }
 
     public void truncToURL(URL url){

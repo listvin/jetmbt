@@ -3,6 +3,7 @@ import Boxes.Event;
 import Boxes.Sequence;
 import Boxes.State;
 import Common.Logger;
+import Common.Utils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,20 +24,20 @@ public class Builder {
     public static void main(String [] args) throws MalformedURLException{
         BlockingQueue<URL> URLQueue = new ArrayBlockingQueue<>(1000);
         URLHasher hasher = new URLHasher(URLQueue);
-        new Thread(hasher).start();
+        Thread thread = new Thread(hasher);
+        thread.start();
         scanner = new Scanner(URLQueue);
 
-        //TODO embed commons CLI
         switch (args[0]){
             case "--url":
                 g = new EFG();
-                me.dfs(Event.createTerminal("BUILDINGROOT"), new State(new URL(args[1]), new Sequence()), 0); //#hardcode
+                me.dfs(Event.createTerminal("BUILDINGROOT"), new State(Utils.createURL(args[1]), new Sequence()), 0); //#hardcode
                 break;
             case "--file":
                 g = new EFG(args[1]);
                 /*Event start = g.pickStart();
                 if (start == null) assert false : "this graph is finished";*/
-                //lol, null here seems to be really dangerous guy!
+                //lol, null here seems to be really dangerous guy!)
                     me.dfs(Event.createTerminal("BUILDINGROOT"), new State(null, new Sequence()), 0); //#hardcode
                 break;
             default:
@@ -45,6 +46,7 @@ public class Builder {
         }
 
         scanner.close();
+        me.log.report("Builder finished successfully.");
         g.dump2dot();
     }
 
@@ -59,18 +61,21 @@ public class Builder {
         for (int i = 0; i < depth; ++i) sb.append(String.format("_%2d_", i));
         log.debug(String.format("DFS: %s (%s | %s)\n", sb.toString(), prev.handle.url, prev.handle.xpath));
 
+        boolean needDump = true;
         if (g.isScannedOnce(prev)) {
+            needDump = false;
             if (prev.handle.isAssignedToUrl())
                 cur = new State(prev.handle.url).createAppended(prev);
         } else
             g.addEdges(prev, Event.generateTestEvents(scanner.scan(cur)));
 
+        if (needDump) g.dump2dot();
+        else log.report("Skipping dump, that seems to be equal to previous.");
 
         if (depth < depthLimit)
             while (true){
                 Event next = g.pickEventToGoFrom(prev);
                 if (next != null) {
-                    g.dump2dot();
                     dfs(next, cur.createAppended(next), depth + 1);
                 } else break;
             }

@@ -1,14 +1,14 @@
 package Boxes;
 
 import Common.ElementType;
+import Common.Logger;
 import Common.Utils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.InvalidSelectorException;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-
 import java.net.URL;
-import java.util.NoSuchElementException;
 
 /**
  * Class expected to provide possibility of absolute
@@ -60,9 +60,17 @@ public class WebHandle {
      * WebDriver's findElement by preferred method.
      * @return WebElement ready to perform actions
      */
-    public WebElement findElement(WebDriver driver) throws NoSuchElementException, InvalidSelectorException{
-        assert driver.getCurrentUrl().equals(url.toString()) : "request of element not from this page occurred";
-        return driver.findElement(By.xpath(xpath));
+    public WebElement findElement(WebDriver driver){
+        if(!driver.getCurrentUrl().equals(url.toString())) {
+            Logger.get(this).error("URL, opened in drier, given to .findElement(WebDriver) is not corresponds to stored url");
+            return null;
+        }
+        try {
+            return driver.findElement(By.xpath(xpath));
+        } catch (NoSuchElementException e){
+            Logger.get(this).exception(e);
+            return null;
+        }
     }
 
     public void assignToUrl(){ assignedToUrl = true; }

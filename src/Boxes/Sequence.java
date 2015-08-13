@@ -45,9 +45,10 @@ public class Sequence extends ArrayList<Event>{
     /**
      * Plays stored sequence of events, throws NoSuchElementException if one of events can't be performed.
      * @param driver WebDriver in which sequence should be played.
+     * @return true in case of successful play
      */
-    public void play(WebDriver driver) throws ElementNotVisibleException, NoSuchElementException, InvalidSelectorException{
-        for(Event event : this) event.perform(driver);
-        //TODO: IRL replay of Sequence should throw something more informative or at least return bool in case of success
+    public boolean play(WebDriver driver){
+        for(Event event : this) if (!event.perform(driver)) return false;
+        return true;
     }
 }

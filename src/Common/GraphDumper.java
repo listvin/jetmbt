@@ -3,6 +3,7 @@ package Common;
 import Boxes.EFG;
 import Boxes.Event;
 import Boxes.WebHandle;
+import org.apache.xpath.operations.Bool;
 
 import java.io.*;
 import java.net.URL;
@@ -29,7 +30,7 @@ public class GraphDumper {
         } catch (InterruptedException | IOException e) {
             log.exception(e);
         }
-        colorMap.put("http://github.com/404", colorList[0]); //#hardcode
+        colorMap.put(Utils.createOwn404().toString(), colorList[0]); //#hardcode
     }
 
     private String generateName(Integer num){ return "dump#" + num.toString(); }
@@ -66,7 +67,7 @@ public class GraphDumper {
             {"white", "black"},
     };
 
-    private String generateJMBTStamp(String url, String xpath, ElementType eltype, String context, Boolean assignedToUrl){
+    private String generateJMBTStamp(String url, String xpath, ElementType eltype, String context, Boolean assignedToUrl, Boolean ticked){
         if (eltype == ElementType.info)
             return "";
         else
@@ -77,8 +78,10 @@ public class GraphDumper {
                     "\t\teltype:%s\n" +
                     "\t\tcontext:%s\n" +
                     "\t\tassignedToUrl:%s\n" +
+                    "\t\tticked:%s\n" +
                     "\t\tJMBT*/\n",
-                    url, xpath, eltype.name(), context == null ? "" : context, assignedToUrl ? "true" : "false");
+                    url, xpath, eltype.name(), context == null ? "" : context,
+                    assignedToUrl ? "true" : "false", ticked ? "true" : "false");
     }
 
     private String generateHtmlNode(String nodeName,
@@ -86,6 +89,7 @@ public class GraphDumper {
                                     String xpath,
                                     ElementType eltype,
                                     Boolean assignedToUrl,
+                                    Boolean ticked,
                                     String context){
         String ch;
         switch (eltype){
@@ -109,10 +113,16 @@ public class GraphDumper {
                         "\t\t\t<TD cellpadding=\"0\" href=\"%s\" tooltip=\"%s\"><FONT point-size=\"5\">%s</FONT></TD>\n" +
                         "\t\t</TR></TABLE>>\n" +
                         "\t];\n",
-                nodeName, generateJMBTStamp(url, xpath, eltype, context, assignedToUrl), eltype,
+                nodeName, generateJMBTStamp(url, xpath, eltype, context, assignedToUrl, ticked), eltype,
                 colorMap.get(url)[1], colorMap.get(url)[0],
                 ch, xpath, url, url,
                 assignedToUrl ? "<U><B>&#128279;</B></U>" : "&#128279;");
+    }
+
+    private String generateHtmlNode(String nodeName,
+                                    String url,
+                                    String xpath){
+        return generateHtmlNode(nodeName, url, xpath, ElementType.info, false, false, "");
     }
 
 
@@ -129,7 +139,7 @@ public class GraphDumper {
     private List<String> orderedUrls = new ArrayList<>();
     private int lastInfoNodeNum = -1;
     public void addInfoNode(Integer num, String url, String label){
-        writer.print(generateHtmlNode(String.format("Info%d", num), url, label, ElementType.info, false, ""));
+        writer.print(generateHtmlNode(String.format("Info%d", num), url, label));
 
         //drawing edge to previous info node
         if (lastInfoNodeNum != -1)
@@ -150,7 +160,8 @@ public class GraphDumper {
         }
 
         writer.print(generateHtmlNode(String.format("Node%d", nodeID.get(node)),
-                node.handle.url.toString(), node.handle.xpath, node.handle.eltype, node.handle.isAssignedToUrl(), node.context));
+                node.handle.url.toString(), node.handle.xpath, node.handle.eltype, node.handle.isAssignedToUrl(),
+                node.isTicked(), node.context));
     }
 
     public void addEdgeFromTo(Event source, Event destination){
@@ -184,6 +195,7 @@ public class GraphDumper {
     Pattern pEltype = Pattern.compile("\\s*eltype:(\\p{all}*)"); //1
     Pattern pContext = Pattern.compile("\\s*context:(\\p{all}*)"); //1
     Pattern pAssigned = Pattern.compile("\\s*assignedToUrl:(\\p{all}*)"); //1
+    Pattern pTicked = Pattern.compile("\\s*ticked:(\\p{all}*)"); //1
     Pattern pJMBTtail = Pattern.compile("\\s*JMBT\\*/");
     public void parseFile(EFG g, String path) throws IOException{
         String s;
@@ -196,7 +208,7 @@ public class GraphDumper {
                 int id = Integer.valueOf(m.group(1));
                 if (!pJMBThead.matcher(reader.readLine()).matches()) throw new IOException("not found /*JMBT record");
                 if (!(m = pUrl.matcher(reader.readLine())).matches()) throw new IOException("not found url: record");
-                URL url = new URL(m.group(1));
+                URL url = Utils.createURL(m.group(1));
                 if (!(m = pXpath.matcher(reader.readLine())).matches()) throw new IOException("not found xpath: record");
                 String xpath = m.group(1);
                 if (!(m = pEltype.matcher(reader.readLine())).matches()) throw new IOException("not found eltype: record");
@@ -205,10 +217,13 @@ public class GraphDumper {
                 String context = m.group(1);
                 if (!(m = pAssigned.matcher(reader.readLine())).matches()) throw new IOException("not found assignedToUrl: record");
                 boolean assigned = Boolean.valueOf(m.group(1));
-                if (!(m = pJMBTtail.matcher(reader.readLine())).matches()) throw new IOException("not found JMBT*/ record");
+                if (!(m = pTicked.matcher(reader.readLine())).matches()) throw new IOException("not found ticked: record");
+                boolean ticked = Boolean.valueOf(m.group(1));
+                if (!pJMBTtail.matcher(reader.readLine()).matches()) throw new IOException("not found JMBT*/ record");
                 Event event = Event.create(new WebHandle(url, xpath, eltype, assigned), context);
+                if (ticked) event.setTicked();
                 g.addEventUnchecked(event);
-                log.info("Have read Node" + id + " from file.");
+                log.info("Have successfully read Node" + id + " from file.");
                 while (rNodeID.size() < id+1) rNodeID.add(null);
                 rNodeID.set(id, event);
             }
