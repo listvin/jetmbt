@@ -1,18 +1,13 @@
-import Boxes.Event;
 import Boxes.State;
 import Boxes.WebHandle;
 import Common.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
-
-import static Common.Selectors.*;
 
 /**
  * Created by wimag on 7/23/15.
@@ -46,42 +41,55 @@ public class Scanner {
     }
 
     /**
-     * Determines elementType with given handle in current Webdriver state
-     *
+     * Determines elementType with given handle in current WebDriver state
+     * explicitWaitLeft supposed to be set
      * @param driver
      * @param handle
      * @return ElementType. unknown if driver url didnt match handle
      * @throws NoSuchElementException when element cant be found by its xpath
      */
-    public ElementType checkHandleType(WebDriver driver, WebHandle handle, Set<String> oldHashes) {
+    private int explicitWaitLeft;
+    private ElementType checkHandleType(WebDriver driver, WebHandle handle, Set<String> oldHashes) {
         try {
-            //###### Verifying opened url
+            //###### Sleeping in case of problems with URL
             for (int t = 0;
                  !driver.getCurrentUrl().equals(handle.url.toString())
-                         && t < Common.Settings.maximumExplicitWait; ++t) {
+                        && t < Common.Settings.maximumSingleExplicitWait
+                        && explicitWaitLeft > 0; ++t) {
                 log.warning("opened URL: " + driver.getCurrentUrl() + "\n" +
                         "needed URL: " + handle.url.toString() + "\n" +
                         "======NOW TRYING TO SLEEP ONE SECOND======");
                 Utils.sleep(1000);
+                --explicitWaitLeft;
             }
 
+            //###### Verifying opened url
             if (!driver.getCurrentUrl().equals(handle.url.toString())) {
-                log.error("URL opened in browser is not corresponding to URL in WebHandle\n - returning .unknown");
-                return ElementType.unknown;
+                if (!Utils.getSimpleLink(Utils.createURL(driver.getCurrentUrl())).equals(Utils.getSimpleLink(handle.url))){
+                    log.warning("Opened and needed links seems to be similar, but not as expected:\n" +
+                            "opened URL: " + driver.getCurrentUrl() + "\n" +
+                            "needed URL: " + handle.url.toString() + "\n" +
+                            "Trying to go ahead.");
+                } else {
+                    log.error("URL opened in browser is not corresponding to URL in WebHandle\n - returning .unknown");
+                    return ElementType.unknown;
+                }
+            } else {
+                explicitWaitLeft = Settings.maximumExplicitWaitInARow;
             }
 
             //###### Storing data before tries to interact
-
-
-//            oldHashes.add(Utils.hashPage(driver));
+            oldHashes.add(Utils.hashPage(driver));
             String oldWindowHandle = driver.getWindowHandle();
 
             //###### Performing action
             WebElement element2check = handle.findElement(driver);
-            if (element2check != null) try{
-                element2check.click();
-            } catch (WebDriverException wde) {
-                return ElementType.noninteractive;
+            if (element2check != null){
+                try{
+                    element2check.click();
+                } catch (WebDriverException wde) {
+                    return ElementType.noninteractive;
+                }
             } else {
                 return ElementType.unknown; //smth bad happened and we lost him
             }
@@ -166,6 +174,7 @@ public class Scanner {
     private int initialReplayFailCounter = 0;
 
     public List<WebHandle> scan(State baseState) {
+        explicitWaitLeft = Settings.maximumExplicitWaitInARow;
         log.debug(String.format("scan() invoked. baseState.url : %s, baseState.sequence.size() : %d\nStarted generating xpathes...", baseState.url.toString(), baseState.sequence.size()));
 
         List<WebHandle>
