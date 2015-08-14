@@ -1,14 +1,20 @@
 /**
+ * This code is loaded to String in class Selector at construction.
+ * Supposed to be executed in browser to collect Xpathes of all visible elements.
  * Created by wimag on 8/7/15.
  */
 
-getElementTreeXPath = function(element)
-{
+getElementXPath = function(element){
     var paths = [];
 
     // Use nodeName (instead of localName) so namespace prefix is included (if any).
-    for (; element && element.nodeType == 1; element = element.parentNode)
+    for (element; element && element.nodeType == 1; element = element.parentNode)
     {
+        if (element.id){
+            paths.unshift('/*[@id="' + element.id + '"]');
+            break;
+        }
+
         var index = 0;
         for (var sibling = element.previousSibling; sibling; sibling = sibling.previousSibling)
         {
@@ -22,20 +28,11 @@ getElementTreeXPath = function(element)
 
         var tagName = element.nodeName.toLowerCase();
         var pathIndex = (index ? "[" + (index+1) + "]" : "");
-        paths.splice(0, 0, tagName + pathIndex);
+        paths.unshift(tagName + pathIndex);
     }
 
     return paths.length ? "/" + paths.join("/") : null;
 };
-
-getElementXPath = function(element)
-{
-    if (element && element.id)
-        return '//*[@id=\"' + element.id + '\"]';
-    else
-        return this.getElementTreeXPath(element);
-};
-
 
 var nodes = [];
 
@@ -47,9 +44,7 @@ try {
             nodes.push(getElementXPath(item));
         }
 
-}
-catch (exc)
-{
+} catch (exc) {
     // Invalid xpath expressions make their way here sometimes.  If that happens,
     // we still want to return an empty set without an exception.
 }
