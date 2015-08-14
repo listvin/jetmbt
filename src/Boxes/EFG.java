@@ -3,6 +3,7 @@ package Boxes;
 import Common.ElementType;
 import Common.GraphDumper;
 import Common.Logger;
+import Common.Utils;
 
 import java.io.IOException;
 import java.util.*;
@@ -52,9 +53,6 @@ public class EFG {
     }
 
     public void addEdgeUnchecked(Event source, Event destination){
-        //TODO remove this crutch. Terminal and others should be drawen, but not in this way!
-        if (destination.handle.eltype != ElementType.clickable && destination.handle.eltype != ElementType.writable)
-            destination.setTicked(); //#hardcode
         addEdge2ListUnchecked(adjList.get(source), destination);
         addEdge2ListUnchecked(revList.get(destination), source);
     }
@@ -97,7 +95,9 @@ public class EFG {
      */
     public Event pickEventToGoFrom(Event source){
         EdgeList list = adjList.get(source);
-        while (list.firstToExplore < list.size() && list.get(list.firstToExplore).destination.isTicked())
+        while (list.firstToExplore < list.size()
+                && (list.get(list.firstToExplore).destination.isTicked()
+                || !Utils.interactive(list.get(list.firstToExplore).destination.handle.eltype)))
             ++list.firstToExplore;
         if (list.firstToExplore == list.size()) return null;
 
