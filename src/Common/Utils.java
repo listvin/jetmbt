@@ -145,4 +145,18 @@ public class Utils {
     public static URL createOwn404(){
         return createURL("https://github.com/404");
     }
+
+    public static boolean interactive(ElementType eltype){
+        //TODO add writables here
+        return eltype == ElementType.clickable;
+    }
+
+    /**
+     * Extract from given URL protocol + authority part + path,
+     * according to https://en.wikipedia.org/wiki/URI_scheme#Generic_syntax
+     */
+    public static String getSimpleLink(URL url){
+        if (url == null) return "";
+        return url.getProtocol() + "://" + url.getAuthority() + url.getPath();
+    }
 }

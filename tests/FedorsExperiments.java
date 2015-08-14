@@ -27,14 +27,9 @@ public class FedorsExperiments {
 //    }
 
         public static final void main(final String[] args) throws Throwable {
-            System.out.println(
-                    FedorsExperiments
-                            .class
-                            .getClassLoader()
-                            .getResource(FedorsExperiments.class.getName().replace('.', '/') + ".class")
-            );
-
-            PrintStream ps = new PrintStream("test.txt");
-            ps.println("ga\n");
+            URL url = new URL("http://localhost:8080/dashboard#tab=Searches");
+            System.out.println(url.getProtocol() + "://" + url.getAuthority() + url.getFile());
+            System.out.println(url.getUserInfo());
+            System.out.println(url.getAuthority());
         }
 }
