@@ -72,7 +72,7 @@ public class Event extends Tickable{
      * @param driver WebDriver to perform in
      * @return true in case of success (Element existed and was visible)
      */
-    public boolean perform(WebDriver driver){ return perform(handle, driver, false); }
+    public boolean perform(WebDriver driver){ return perform(handle, driver); }
 
     /**
      * This static one is pretty useful for using from inside of checker in Scanner, cause Event can't be
@@ -82,16 +82,16 @@ public class Event extends Tickable{
      * @return true in case of success (Element existed and was visible)
      */
     //TODO this requires redesign for writables
-    public static boolean perform(WebHandle handle, WebDriver driver, boolean test){
+    public static boolean perform(WebHandle handle, WebDriver driver){
         WebElement we = handle.findElement(driver);
         if (we == null){
             //TODO this place strongly interferes with driver's implicitly wait. So, I think, personal fails counter per handle needed.
-            if (!test) log.error(handle.url.toString() + " | " + handle.xpath + "\n" +
+            log.error(handle.url.toString() + " | " + handle.xpath + "\n" +
                     "Unable to .perform(WebDriver), cause search of element by stored selector is failed.");
             return false;
         }
         if (!we.isDisplayed() || !we.isEnabled()){
-            if (!test) log.error(handle.url.toString() + " | " + handle.xpath + "\n" +
+            log.error(handle.url.toString() + " | " + handle.xpath + "\n" +
                     "Failed to .perform(WebDriver), cause element not displayed or not enabled.");
             return false;
         }

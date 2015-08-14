@@ -19,7 +19,7 @@ import static Common.Selectors.*;
  */
 public class Scanner {
     private Random random = new Random(Common.Settings.randomSeed);
-    private Logger log = new Logger(this, Logger.Level.warning, Logger.Level.warning);
+    private Logger log = new Logger(this, Logger.Level.debug, Logger.Level.debug);
     private WebDriver driver;
     private Alphabet alphabet;
     private BlockingQueue<URL> URLQueue = null;
@@ -80,8 +80,16 @@ public class Scanner {
             String oldWindowHandle = driver.getWindowHandle();
 
             //###### Performing action
-            Event.perform(handle, driver, false);
-            //###### Check if alert window exists #TODO if works
+            WebElement element2check = handle.findElement(driver);
+            if (element2check != null) try{
+                element2check.click();
+            } catch (WebDriverException wde) {
+                return ElementType.noninteractive;
+            } else {
+                return ElementType.unknown; //smth bad happened and we lost him
+            }
+
+            //###### Check if alert window exists
             try {
                 driver.getTitle();
             } catch (UnhandledAlertException e) {
@@ -204,13 +212,10 @@ public class Scanner {
         Set<String> oldHashes = new HashSet<String>() {{
             add(oldHash);
         }};
-        int cc = 0;
 
+        int cc = 0;
         for (WebHandle handle : allHandles) {
-            if(cc % 10 == 0) {
-                System.out.println("processed " + cc + " handles");
-            }
-            cc ++;
+            if(cc++ % 10 == 0) log.debug("processed " + cc + " handles");
             log.info("XPATH for element being tested: " + handle.xpath);
 
             //###### Checking for cached result
