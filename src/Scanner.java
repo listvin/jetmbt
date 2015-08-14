@@ -55,9 +55,6 @@ public class Scanner {
      */
     public ElementType checkHandleType(WebDriver driver, WebHandle handle, Set<String> oldHashes) {
         try {
-
-
-
             //###### Verifying opened url
             for (int t = 0;
                  !driver.getCurrentUrl().equals(handle.url.toString())
@@ -191,7 +188,7 @@ public class Scanner {
         for (String xpath : Selectors.getAllXpaths(driver)) {
             allHandles.add(new WebHandle(curUrl, xpath));
         }
-        log.debug(String.format("scan() invoked.\n\tbaseState.url : %s\n\tbaseState.sequence.size() : %d\n\tFound %d elements. Started generating xpathes...\n", baseState.url.toString(), baseState.sequence.size(), allHandles.size()));
+        log.debug("\t " + allHandles.size() + " xpathes generated. Started testing interactivity...\n");
 
         //###### saving old page hash
         String oldHash = Utils.hashPage(driver);
@@ -205,8 +202,6 @@ public class Scanner {
                 baseState.truncToURL(curUrl);
             }
         }
-
-        log.debug("\t " + allHandles.size() + " xpathes generated. Started testing interactivity...\n");
 
         //###### Testing interactivity
         Set<String> oldHashes = new HashSet<String>() {{
@@ -230,9 +225,6 @@ public class Scanner {
                 }
                 log.info("Fetched from cache as " + handle.eltype.name() + "\n");
             } else {
-
-
-
                 //###### initial state replay
                 try {
                     baseState.reach(driver);
@@ -265,7 +257,7 @@ public class Scanner {
                 //case writable:
                 case clickable:
                 case terminal:
-                case unknown:
+                //case unknown:
                     interactiveHandles.add(handle);
                     break;
             }
