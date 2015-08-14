@@ -26,6 +26,8 @@ public class Builder {
         URLHasher hasher = new URLHasher(URLQueue);
         Thread thread = new Thread(hasher);
         thread.start();
+        Thread logThread = new Thread(me.log);
+        logThread.start(); logThread.setPriority(Thread.MIN_PRIORITY);
         scanner = new Scanner(URLQueue);
 
         switch (args[0]){
@@ -52,7 +54,7 @@ public class Builder {
 
     static final int depthLimit = 50; //#hardcode
     /**
-     * @param prev - this called "prev" because in browser this event was already performed. For simple dfs 
+     * @param prev - this called "prev" because in browser this event was already performed. For simple dfs
      */
     private void dfs(Event prev, State cur, int depth){
         prev.setTicked(); //for now (for building) let's make it classic, with touring by nodes instead of edges.

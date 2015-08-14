@@ -22,7 +22,7 @@ public class GraphDumper {
     private Integer dumpNum = 0;
     private Logger log = new Logger(this, Logger.Level.debug);
     public GraphDumper() {
-        folderName = Logger.getFolderTimeName();
+        folderName = Logger.folderName;
         path = "graphs/" + folderName + "/";
         String[] args = {"mkdir", path}; //#hardcode
         try {
