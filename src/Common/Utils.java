@@ -119,7 +119,7 @@ public class Utils {
      */
     public static void setUpDriver(WebDriver driver){
         driver.manage().timeouts().implicitlyWait(750, TimeUnit.MILLISECONDS);
-        driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
+        driver.manage().timeouts().pageLoadTimeout(4000, TimeUnit.MILLISECONDS);
         //driver.manage().timeouts().setScriptTimeout(15, TimeUnit.SECONDS);
 
 
