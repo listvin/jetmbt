@@ -4,12 +4,7 @@ import Common.ElementType;
 import Common.GraphDumper;
 import Common.Logger;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -23,6 +18,7 @@ public class EFG {
     private GraphDumper dumper = new GraphDumper();
     private Random random = new Random(Common.Settings.randomSeed);
     private Map<Event, EdgeList> adjList = new HashMap<>();
+    private Map<Event, EdgeList> revList = new HashMap<>();
     public EFG(){}
     public EFG(String path){
         try {
@@ -35,12 +31,6 @@ public class EFG {
 
     //TODO turn this in use instead of builder's inside search with check through isScannedOnce(Event)
     public Event pickStart(){
-		//1. Search for all unticked nodes
-		//2. Search for all assigned nodes
-		//3a. Dijkstrate from one assigned to all
-		//3b. Dijkstrate from one unticked to all
-		//4. Choose shortest route
-		//5. Create (and return) State with this route inside
         for (Event node : adjList.keySet())
             if (!node.isTicked()){
                 node.setTicked();
@@ -53,9 +43,11 @@ public class EFG {
 
     public void addEventUnchecked(Event node){
         adjList.put(node, new EdgeList());
+        revList.put(node, new EdgeList());
     }
 
-    private void addEdgeUnchecked(EdgeList edgeList, Event destination){
+    /**Be careful here, look both after adjList and revList*/
+    private void addEdge2ListUnchecked(EdgeList edgeList, Event destination){
         edgeList.add(new Edge(destination));
     }
 
@@ -63,7 +55,8 @@ public class EFG {
         //TODO remove this crutch. Terminal and others should be drawen, but not in this way!
         if (destination.handle.eltype != ElementType.clickable && destination.handle.eltype != ElementType.writable)
             destination.setTicked(); //#hardcode
-        addEdgeUnchecked(adjList.get(source), destination);
+        addEdge2ListUnchecked(adjList.get(source), destination);
+        addEdge2ListUnchecked(revList.get(destination), source);
     }
 
     /**
@@ -76,7 +69,7 @@ public class EFG {
         if (!adjList.containsKey(destination))
             addEventUnchecked(destination);
         //2. Adding edge to the certain list of outgoing paths
-        addEdgeUnchecked(edgeList, destination);
+        addEdge2ListUnchecked(edgeList, destination);
     }
 
     /**
@@ -89,7 +82,11 @@ public class EFG {
             addEventUnchecked(source);
         //So, shuffling. Here it is.
             Collections.shuffle(destList);
-        for (Event destination : destList) addEdge(adjList.get(source), destination);
+        EdgeList sourcesEdgeList = adjList.get(source);
+        for (Event destination : destList){
+            addEdge(sourcesEdgeList, destination);
+            addEdge(revList.get(destination), source);
+        }
     }
 
     /**

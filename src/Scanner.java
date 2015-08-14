@@ -68,7 +68,7 @@ public class Scanner {
             String oldWindowHandle = driver.getWindowHandle();
 
             //###### Performing action
-            Event.perform(handle, driver, false);
+            Event.perform(handle, driver, true);
 
             //###### Check if alert window exists
             if (ExpectedConditions.alertIsPresent().apply(driver) != null){
@@ -144,19 +144,17 @@ public class Scanner {
      */
     private int initialReplayFailCounter = 0;
     public List<WebHandle> scan(State baseState){
+        log.debug(String.format("scan() invoked. baseState.url : %s, baseState.sequence.size() : %d\nStarted generating xpathes...", baseState.url.toString(), baseState.sequence.size()));
+
         List<WebHandle>
             interactiveHandles = new ArrayList<>(),
             allHandles = new ArrayList<>();
 
-
-        //###### getting all elements
-            List<WebElement> elementList = driver.findElements(By.cssSelector("*"));
+        //###### going to initial state
             if (!baseState.reach(driver)) {
                 log.error("Can't reach state in scanner to get initial value for oldHash.");
                 return new ArrayList<>();
             }
-            
-        log.debug(String.format("scan() invoked.\n\tbaseState.url : %s\n\tbaseState.sequence.size() : %d\n\tFound %d elements. Started generating xpathes...\n", baseState.url.toString(), baseState.sequence.size(), elementList.size()));
 
         //###### queuing url for url hasher
             URL curUrl = Utils.createURL(driver.getCurrentUrl());
@@ -231,7 +229,7 @@ public class Scanner {
                         case clickable: case terminal: case unknown: interactiveHandles.add(handle); break;
                     }
             }
-        log.report("Classified " + interactiveHandles.size() + " elements.\n");
+        log.report("Classified " + interactiveHandles.size() + " elements (Sequence.size() now " + baseState.sequence.size() + ").\n");
 
         //###### finally, returning
             return interactiveHandles;
