@@ -43,7 +43,10 @@ try {
     var result = document.evaluate("//*", document, null, XPathResult.ANY_TYPE, null);
     var item;
     while ((item = result.iterateNext()) != null)
-        nodes.push(getElementXPath(item));
+        if(getComputedStyle( item ).visibility === 'visible'){
+            nodes.push(getElementXPath(item));
+        }
+
 }
 catch (exc)
 {

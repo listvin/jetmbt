@@ -161,6 +161,8 @@ public class Scanner {
     private int initialReplayFailCounter = 0;
 
     public List<WebHandle> scan(State baseState) {
+        log.debug(String.format("scan() invoked. baseState.url : %s, baseState.sequence.size() : %d\nStarted generating xpathes...", baseState.url.toString(), baseState.sequence.size()));
+
         List<WebHandle>
                 interactiveHandles = new ArrayList<>(),
                 allHandles = new ArrayList<>();

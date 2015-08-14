@@ -83,12 +83,24 @@ public class Logger implements Closeable{
                 text +
                 "\n~~~~~~~~~~~~~~~~~~\n");
     }
-    public void info(String msg){ printMessage("34", "INF", msg, Level.info); }
-    public void debug(String msg){ printMessage("33", "DBG", msg, Level.debug); }
-    public void warning(String msg){ printMessage("33", "WRN", msg, Level.warning); }
-    public void error(String msg){ printMessage("31", "ERR", msg, Level.error); }
-    public <T extends Exception> void exception(T e){ printMessage("31", "EXC", ExceptionUtils.getStackTrace(e), Level.error); }
-    public void report(String msg){ printMessage("32", "REP", msg, Level.report); }
+    public void info(String msg){
+//        printMessage("34", "INF", msg, Level.info);
+    }
+    public void debug(String msg){
+//        printMessage("33", "DBG", msg, Level.debug);
+    }
+    public void warning(String msg){
+//        printMessage("33", "WRN", msg, Level.warning);
+    }
+    public void error(String msg){
+//        printMessage("31", "ERR", msg, Level.error);
+    }
+    public <T extends Exception> void exception(T e){
+//        printMessage("31", "EXC", ExceptionUtils.getStackTrace(e), Level.error);
+    }
+    public void report(String msg){
+        printMessage("32", "REP", msg, Level.report);
+    }
 
     public void close(){
         printer.close();
