@@ -5,8 +5,11 @@ import Common.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Created by wimag on 7/23/15.
@@ -69,19 +72,22 @@ public class Scanner {
             Logger.cpd("verified opened url");
 
             //###### Storing data before tries to interact
-            oldHashes.add(Utils.hashPage(driver));
+
+
+//            oldHashes.add(Utils.hashPage(driver));
             String oldWindowHandle = driver.getWindowHandle();
             Logger.cpd("captured initial screenshot");
 
             //###### Performing action
             WebElement element2check = handle.findElement(driver);
-            if (element2check != null){
+            if (element2check != null)
                 try{
                     element2check.click();
                 } catch (WebDriverException wde) {
                     return ElementType.noninteractive;
                 }
-            } else {
+            else {
+                System.out.println("wolololo");
                 return ElementType.unknown; //smth bad happened and we lost him
             }
             Logger.cpd("performed action (click for now)");
@@ -160,7 +166,6 @@ public class Scanner {
 
         } catch (WebDriverException e) {
             log.exception(e);
-            Logger.cpd("that's it. Smth exceptional happened in checker, and we returning unknown");
             return ElementType.unknown;
         }
     }
@@ -193,6 +198,13 @@ public class Scanner {
         Invoker.urlHasher.add(curUrl);
 
         //###### collecting all xpathes
+
+        //TODO: remove #HARDCODE wait
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         for (String xpath : Selectors.getAllXpaths(driver)) {
             allHandles.add(new WebHandle(curUrl, xpath));
         }

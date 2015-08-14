@@ -1,10 +1,7 @@
 package Common;
 
 import org.apache.commons.io.FileUtils;
-import org.openqa.selenium.By;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import javax.imageio.ImageIO;
@@ -116,18 +113,20 @@ public class Utils {
      * @param driver
      */
     public static void setUpDriver(WebDriver driver){
-        driver.manage().timeouts().implicitlyWait(750, TimeUnit.MILLISECONDS);
-        driver.manage().timeouts().pageLoadTimeout(4000, TimeUnit.MILLISECONDS);
+        driver.manage().timeouts().implicitlyWait(2000, TimeUnit.MILLISECONDS);
+        driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
         //driver.manage().timeouts().setScriptTimeout(15, TimeUnit.SECONDS);
 
 
         //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
-        driver.get("http://localhost:8080/login"); //#hardcode
+        driver.get("http://localhost:8080"); //#hardcode
+        driver.findElement(By.xpath("/html/body/div[4]/div[1]/div/div[1]/div[1]/div/div[3]/div/div[2]/button")).click();
         log.report("Have logged in with root/root at\n\tlocalhost:8080/login\n");
+        driver.findElement(By.id("username")).sendKeys("root");
+        driver.findElement(By.id("password")).sendKeys("root");
+        driver.findElement(By.id("password")).sendKeys(Keys.RETURN);
 
-        driver.findElement(By.id("id_l.L.login")).sendKeys("root");
-        driver.findElement(By.id("id_l.L.password")).sendKeys("root");
-        driver.findElement(By.id("id_l.L.loginButton")).click();
+//        driver.findElement(By.id("id_l.L.loginButton")).click();
     }
 
     public static boolean interactive(ElementType eltype){
