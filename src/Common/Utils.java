@@ -113,7 +113,7 @@ public class Utils {
      * @param driver
      */
     public static void setUpDriver(WebDriver driver){
-        driver.manage().timeouts().implicitlyWait(2000, TimeUnit.MILLISECONDS);
+        driver.manage().timeouts().implicitlyWait(1000, TimeUnit.MILLISECONDS);
         driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
         //driver.manage().timeouts().setScriptTimeout(15, TimeUnit.SECONDS);
 
@@ -121,10 +121,11 @@ public class Utils {
         //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
         driver.get("http://localhost:8080"); //#hardcode
         driver.findElement(By.xpath("/html/body/div[4]/div[1]/div/div[1]/div[1]/div/div[3]/div/div[2]/button")).click();
-        log.report("Have logged in with root/root at\n\tlocalhost:8080/login\n");
-        driver.findElement(By.id("username")).sendKeys("root");
-        driver.findElement(By.id("password")).sendKeys("root");
-        driver.findElement(By.id("password")).sendKeys(Keys.RETURN);
+        driver.findElement(By.xpath("/html/body/div/div[1]/div/form/div[2]/div[2]/span/a/span")).click();
+//        log.report("Have logged in with root/root at\n\tlocalhost:8080/login\n");
+//        driver.findElement(By.id("username")).sendKeys("root");
+//        driver.findElement(By.id("password")).sendKeys("root");
+//        driver.findElement(By.id("password")).sendKeys(Keys.RETURN);
 
 //        driver.findElement(By.id("id_l.L.loginButton")).click();
     }
