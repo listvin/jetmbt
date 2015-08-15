@@ -51,7 +51,6 @@ public class GraphDumper {
             {"indigo", "white"},
             {"deeppink", "black"},
             {"lightpink", "black"},
-            {"orangered4", "white"},
             {"cornflowerblue", "black"},
             {"maroon", "white"},
             {"cyan", "black"},
