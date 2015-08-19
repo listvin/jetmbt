@@ -51,4 +51,19 @@ public class Sequence extends ArrayList<Event>{
         for(Event event : this) if (!event.perform(driver)) return false;
         return true;
     }
+
+    public String toString(){
+        StringBuilder stringBuilder = new StringBuilder();
+        for(int i = 0; i < this.size(); i ++){
+            if(i == 0 || !get(i).handle.url.equals(get(i-1).handle.url)){
+                stringBuilder.append(get(i).handle.url.toString() + ", ");
+            }
+            stringBuilder.append(get(i).handle.xpath + " ");
+            if(!get(i).context.isEmpty()){
+                stringBuilder.append(", " + get(i).context);
+            }
+            stringBuilder.append("\n ----------> \n");
+        }
+        return stringBuilder.toString();
+    }
 }

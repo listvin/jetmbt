@@ -4,9 +4,16 @@ import Common.ElementType;
 import Common.GraphDumper;
 import Common.Logger;
 import Common.Utils;
+import com.sun.istack.internal.Nullable;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 /**
  * This is implementation of a holder for event flow graph.
@@ -43,7 +50,7 @@ public class EFG {
     public boolean isScannedOnce(Event event){ return adjList.containsKey(event) && adjList.get(event).size() > 0; }
 
     public void addEventUnchecked(Event node){
-        adjList.put(node, new EdgeList());
+        adjList.put(node, new EdgeList());//BIDLOCODE!!
         revList.put(node, new EdgeList());
     }
 
@@ -133,6 +140,205 @@ public class EFG {
             return false;
         }
     }
+
+    class PathGenerator{
+
+
+        /**
+         * Generates radom paths ending with event
+         * stores copies of adjlist and revlist
+         * @param event - event to go through
+         * @param n - number of paths to generate
+         * @param leghth - legth of paths
+         */
+        public void generatePathsTroughEvent(Event event,int n, int leghth){
+            Event root = null;
+            for(Event ev: adjList.keySet()){
+                if(ev.handle.eltype == ElementType.terminal && adjList.get(ev).size() > 0){
+                    root = ev;
+                }
+            }
+            if(root == null){
+                return;
+            }
+            Map<Event, Vertex> depths = bfs(adjList, root);
+            for(Vertex v: depths.values()){
+                System.out.println(v);
+            }
+            //System.out.println(propagateForward(event, 5));
+            List<Sequence> paths = new ArrayList<>();
+            while(paths.size() < n){
+                //steps after event
+                int forward = 0;
+                if(depths.get(event).depth < 2){
+                    forward = n - depths.get(event).depth;
+                }else if(adjList.get(event).size() != 0){
+                    forward = random.nextInt(leghth - depths.get(event).depth);
+                }
+                final int temp = forward;
+                List<Event> suffix = propagateForward(event, forward);
+                List<Event> prefix = propagateForward(revList, new Vertex(0, event, null), (v) -> v.depth + depths.get(v.event).depth + temp >= leghth);
+                System.out.println(forward);
+                System.out.println(suffix);
+                System.out.println(prefix);
+                Sequence path = new Sequence();
+                Event tmp;
+                if(prefix != null && prefix.size() > 0){
+                    tmp = prefix.get(0);
+                }else{
+                    tmp = event;
+                }
+                while(depths.get(tmp).parent != null){
+                    path.add(tmp);
+                    tmp = depths.get(tmp).parent;
+                }
+                for(int i = 1; i < prefix.size(); i ++){
+                    path.add(prefix.get(i));
+                }
+                for(int i = suffix.size() - 1; i > 0; i--){
+                    path.add(suffix.get(i));
+                }
+
+                paths.add(path);
+            }
+            for(Sequence path: paths){
+                System.out.println(path);
+            }
+        }
+
+
+        /**
+         * generate path of given length
+         * @param root
+         * @param len
+         * @return
+         */
+        private List<Event> propagateForward(Event root, int len){
+            return propagateForward(root, (v) -> v.depth >= len);
+        }
+
+        /**
+         * generate path untill condition is satisfied
+         * @param root
+         * @param condition
+         * @return
+         */
+        private List<Event> propagateForward(Event root, Predicate<Vertex> condition){
+            return propagateForward(adjList, new Vertex(0, root, null), condition);
+        }
+
+        /**
+         * Generate path in graph until condition is satisfied
+         * @param graph
+         * @param root
+         * @param condition
+         * @return
+         */
+        private List<Event> propagateForward(Map<Event, EdgeList> graph, Vertex root, Predicate<Vertex> condition){
+            if(condition.test(root)){
+                return new ArrayList<>(Arrays.asList(root.event));
+            }
+            List<Integer> permutuation = new ArrayList<>();
+            for(int i = 0; i < graph.get(root.event).size(); i++){
+                permutuation.add(i);
+            }
+            Collections.shuffle(permutuation);
+            List<Event> result;
+            for(int x: permutuation){
+                result = propagateForward(graph, new Vertex(root.depth+1, graph.get(root.event).get(x).destination, root.event), condition);
+                if(result != null){
+                    result.add(root.event);
+                    return result;
+                }
+            }
+            return null;
+        }
+
+
+        /**
+         * Container for storing results of BFS, DFS and Other algorithms
+         */
+        private class Vertex{
+            public int depth; //
+            public Event event;
+            public Event parent;
+
+
+
+            public Vertex(int depth,Event event , Event parent) {
+                this.depth = depth;
+                this.parent = parent;
+                this.event = event;
+            }
+
+            public String toString(){
+                return event.toString() + "\n Current depth: " + String.valueOf(depth);
+            }
+        }
+
+
+        /**
+         * Simple bfs implementation - performs BFS on given Graph from given root.
+         * @param graph
+         * @param root
+         * @return returns List of Vertex objects - tuple of depth, parent and event. If parent is set to null - it is root
+         */
+        private Map<Event, Vertex> bfs(Map<Event, EdgeList> graph, Event root){
+            Map<Event, Vertex> ans = new HashMap<>();
+            Event.invalidateTicks();
+            Queue<Vertex> queue = new ArrayDeque<>();
+            root.setTicked();
+            queue.add(new Vertex(0, root, null));
+            ans.put(root, new Vertex(0, root, null));
+
+            while (!queue.isEmpty()){
+                Vertex cur = queue.poll();
+
+                for(Edge next: graph.get(cur.event)){
+                    if(!next.destination.isTicked()){
+                        ans.put(next.destination, new Vertex(cur.depth + 1, next.destination, cur.event));
+                        next.destination.setTicked();
+                        queue.add(new Vertex(cur.depth+1, next.destination, cur.event));
+                    }
+                }
+            }
+            return ans;
+        }
+    }
+
+    public void run(){
+        PathGenerator tmp = new PathGenerator();
+        try {
+            tmp.generatePathsTroughEvent(Event.create(new WebHandle(new URL("http://localhost:8080/issues"), "//*[@id=\"id_l.I.c.il.i_74_2.issueContainer\"]/table/tbody/tr/td"), ""),5, 10);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+    public void cnt(){
+        int ct = 0;
+        int vs = 0;
+        for(Event ev: adjList.keySet()){
+            if(adjList.get(ev).size() > 0){
+                ct ++;
+                System.out.println(ev.handle.url.toString());
+            }
+            if(ev.isTicked()){
+                vs ++;
+            }
+            if(ev.isTicked() && adjList.get(ev).size() == 0){
+                System.out.println(ev);
+            }
+        }
+        System.out.println("Non empty edge lists " + ct);
+        System.out.println("Ticked events " + vs);
+        System.out.println("Total events " + adjList.size());
+    }
+    public static void main(String[] args){
+        EFG g = new EFG(args[0]);
+        g.run();
+        //g.cnt();
+    }
+
 }
 
 

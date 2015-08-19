@@ -109,6 +109,20 @@ public class Utils {
     }
 
     /**
+     * #Hardcode - login
+     */
+    public static void login(WebDriver driver){
+        driver.get("http://localhost:8080"); //#hardcode
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        driver.findElement(By.xpath("/html/body/div[4]/div[1]/div/div[1]/div[1]/div/div[3]/div/div[2]/button")).click();
+        driver.findElement(By.xpath("/html/body/div/div[1]/div/form/div[2]/div[2]/span/a/span")).click();
+    }
+
+    /**
      * perform login and parameter setup un specified driver
      * @param driver
      */
@@ -119,9 +133,7 @@ public class Utils {
 
 
         //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
-        driver.get("http://localhost:8080"); //#hardcode
-        driver.findElement(By.xpath("/html/body/div[4]/div[1]/div/div[1]/div[1]/div/div[3]/div/div[2]/button")).click();
-        driver.findElement(By.xpath("/html/body/div/div[1]/div/form/div[2]/div[2]/span/a/span")).click();
+        login(driver);
 //        log.report("Have logged in with root/root at\n\tlocalhost:8080/login\n");
 //        driver.findElement(By.id("username")).sendKeys("root");
 //        driver.findElement(By.id("password")).sendKeys("root");
@@ -143,4 +155,5 @@ public class Utils {
         //TODO check it for graphviz
         return s.replace("\"","&#34;").replace("&", "&#38;").replace("<","&lt;").replace("'","&apos;");
     }
+
 }
