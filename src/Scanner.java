@@ -1,3 +1,4 @@
+import Boxes.JetURL;
 import Boxes.State;
 import Boxes.WebHandle;
 import Common.*;
@@ -5,9 +6,7 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
-import java.net.URL;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
 
 /**
  * Created by wimag on 7/23/15.
@@ -16,26 +15,15 @@ public class Scanner {
     private Random random = new Random(Common.Settings.randomSeed);
     private Logger log = new Logger(this, Logger.Level.debug, Logger.Level.debug);
     private WebDriver driver;
-    private Alphabet alphabet;
-    private BlockingQueue<URL> URLQueue = null;
 
     /**
      * Constructs Scanner by creating a Firefox (at the moment) driver and logging at "http://localhost:8080/login" with root/root
      */
     public Scanner() {
-        driver = new FirefoxDriver();
-        Utils.setUpDriver(driver);
-        alphabet = new PostgreSQLAlphabet();
+        Utils.setUpDriver(driver = new FirefoxDriver());
     }
 
-    public Scanner(BlockingQueue<URL> queue) {
-        this();
-        URLQueue = queue;
-    }
-
-    /**
-     * Quits assigned driver
-     */
+    /**Quits from assigned driver*/
     public void close() {
         driver.quit();
     }
@@ -49,38 +37,41 @@ public class Scanner {
      * @throws NoSuchElementException when element cant be found by its xpath
      */
     private int explicitWaitLeft;
-    private ElementType checkHandleType(WebDriver driver, WebHandle handle, Set<String> oldHashes) {
+    private ElementType checkHandleType(WebDriver driver, WebHandle handle, Set<String> oldHashes) { Logger.init();
         try {
-            //###### Sleeping in case of problems with URL
+            //###### Sleeping in case of problems with JetURL
             for (int t = 0;
-                 !driver.getCurrentUrl().equals(handle.url.toString())
+                 !JetURL.compare(handle.url, driver.getCurrentUrl())
                         && t < Common.Settings.maximumSingleExplicitWait
                         && explicitWaitLeft > 0; ++t) {
-                log.warning("opened URL: " + driver.getCurrentUrl() + "\n" +
-                        "needed URL: " + handle.url.toString() + "\n" +
+                log.warning("opened JetURL: " + driver.getCurrentUrl() + "\n" +
+                        "needed JetURL: " + handle.url.toFullString() + "\n" +
                         "======NOW TRYING TO SLEEP ONE SECOND======");
                 Utils.sleep(1000);
                 --explicitWaitLeft;
             }
+            Logger.cpd("got url");
 
             //###### Verifying opened url
-            if (!driver.getCurrentUrl().equals(handle.url.toString())) {
-                if (!Utils.getSimpleLink(Utils.createURL(driver.getCurrentUrl())).equals(Utils.getSimpleLink(handle.url))){
+            if (JetURL.compare(handle.url, driver.getCurrentUrl())) {
+                explicitWaitLeft = Settings.maximumExplicitWaitInARow;
+            } else {
+                if (JetURL.weaklyCompare(handle.url, driver.getCurrentUrl())){
                     log.warning("Opened and needed links seems to be similar, but not as expected:\n" +
-                            "opened URL: " + driver.getCurrentUrl() + "\n" +
-                            "needed URL: " + handle.url.toString() + "\n" +
+                            "opened JetURL: " + driver.getCurrentUrl() + "\n" +
+                            "needed JetURL: " + handle.url.toFullString() + "\n" +
                             "Trying to go ahead.");
                 } else {
                     log.error("URL opened in browser is not corresponding to URL in WebHandle\n - returning .unknown");
                     return ElementType.unknown;
                 }
-            } else {
-                explicitWaitLeft = Settings.maximumExplicitWaitInARow;
             }
+            Logger.cpd("verified opened url");
 
             //###### Storing data before tries to interact
             oldHashes.add(Utils.hashPage(driver));
             String oldWindowHandle = driver.getWindowHandle();
+            Logger.cpd("captured initial screenshot");
 
             //###### Performing action
             WebElement element2check = handle.findElement(driver);
@@ -93,6 +84,7 @@ public class Scanner {
             } else {
                 return ElementType.unknown; //smth bad happened and we lost him
             }
+            Logger.cpd("performed action (click for now)");
 
             //###### Check if alert window exists
             try {
@@ -102,6 +94,7 @@ public class Scanner {
                 driver.switchTo().alert().dismiss();
                 return ElementType.terminal;
             }
+            Logger.cpd("checked alert window");
 
 
             //###### This checks if new windows/tabs were opened
@@ -115,9 +108,10 @@ public class Scanner {
                 driver.switchTo().window(oldWindowHandle);
                 return ElementType.terminal;
             }
+            Logger.cpd("Have checked if new windows opened.");
 
             //###### Collecting data after interaction
-            URL newURL = Utils.createURL(driver.getCurrentUrl());
+            JetURL newURL = new JetURL(driver.getCurrentUrl());
 
             //TODO The next check seems to be rather boring... Need flow rule for this
             if (newURL == null || !newURL.getHost().equals(handle.url.getHost()))
@@ -128,12 +122,15 @@ public class Scanner {
             if (!newURL.equals(handle.url))
                 return ElementType.clickable;
 
-            //###### Comparing screenshots
-            if (oldHashes.contains(Utils.hashPage(driver)))
+            //###### Taking second screenshot
+            String newHash = Utils.hashPage(driver);
+            Logger.cpd("2nd screen captured and WILL be compared with 1st");
+
+            //###### returning
+            if (oldHashes.contains(newHash))
                 return ElementType.noninteractive;
             else
                 return ElementType.clickable;
-
 
 
             //###### Checking writability
@@ -163,6 +160,7 @@ public class Scanner {
 
         } catch (WebDriverException e) {
             log.exception(e);
+            Logger.cpd("that's it. Smth exceptional happened in checker, and we returning unknown");
             return ElementType.unknown;
         }
     }
@@ -173,44 +171,46 @@ public class Scanner {
      */
     private int initialReplayFailCounter = 0;
 
-    public List<WebHandle> scan(State baseState) {
+    public List<WebHandle> scan(State baseState) { Logger.init();
         explicitWaitLeft = Settings.maximumExplicitWaitInARow;
-        log.debug(String.format("scan() invoked. baseState.url : %s, baseState.sequence.size() : %d\nStarted generating xpathes...", baseState.url.toString(), baseState.sequence.size()));
+        log.debug(String.format("scan() invoked. baseState.url : %s, baseState.sequence.size() : %d\nStarted generating xpathes...", baseState.url.graphUrl(), baseState.sequence.size()));
 
         List<WebHandle>
                 interactiveHandles = new ArrayList<>(),
                 allHandles = new ArrayList<>();
 
 
-        //###### getting all elements
+        //###### reaching desired state
         if (!baseState.reach(driver)) {
             log.error("Can't reach state in scanner to get initial value for oldHash.");
             return new ArrayList<>();
         }
+        Logger.cpd("have reached initial state");
 
 
         //###### queuing url for url hasher
-        URL curUrl = Utils.createURL(driver.getCurrentUrl());
-        if (URLQueue != null) URLQueue.add(curUrl);
+        JetURL curUrl = new JetURL(driver.getCurrentUrl());
+        Invoker.urlHasher.add(curUrl);
 
         //###### collecting all xpathes
         for (String xpath : Selectors.getAllXpaths(driver)) {
             allHandles.add(new WebHandle(curUrl, xpath));
         }
-        log.debug("\t " + allHandles.size() + " xpathes generated. Started testing interactivity...\n");
+        Logger.cpd("Xpaths generated");
+        log.debug("\t " + allHandles.size() + " Xpaths generated. Started testing interactivity...\n");
 
         //###### saving old page hash
         String oldHash = Utils.hashPage(driver);
+        Logger.cpd("hashed old page");
 
         //###### checking if it is possible to trunc!??!?!?!??!?????
         //TODO move it to reach of State
-        if (URLQueue != null) {
-            List<String> knownHashes4thisPage = new ArrayList<>(alphabet.getHashesByURL(curUrl));
-            if (baseState.sequence.size() > 0 && knownHashes4thisPage.contains(oldHash)) {
-                log.debug("Trunc to url performed: " + (curUrl != null ? curUrl.toString() : "null"));
-                baseState.truncToURL(curUrl);
-            }
+        List<String> knownHashes4thisPage = new ArrayList<>(Invoker.alphabet.getHashesByURL(curUrl));
+        if (baseState.sequence.size() > 0 && knownHashes4thisPage.contains(oldHash)) {
+            log.debug("Trunc to url performed: " + (curUrl != null ? curUrl.toFullString() : "null"));
+            baseState.truncToURL(curUrl);
         }
+        Logger.cpd("checked whether its possible to trunc sequence.");
 
         //###### Testing interactivity
         Set<String> oldHashes = new HashSet<String>() {{
@@ -218,13 +218,13 @@ public class Scanner {
         }};
 
         int cc = 0;
-        for (WebHandle handle : allHandles) {
+        for (WebHandle handle : allHandles) { Logger.init("for");
             if(cc++ % 10 == 0) log.debug("processed " + cc + " handles");
             log.info("XPATH for element being tested: " + handle.xpath);
 
             //###### Checking for cached result
             ElementType cachedEltype = null;
-            if ((cachedEltype = alphabet.request(handle.url, handle.xpath)) != ElementType.unknown) {
+            if ((cachedEltype = Invoker.alphabet.request(handle.url, handle.xpath)) != ElementType.unknown) {
                 handle.eltype = cachedEltype;
                 if (handle.eltype == ElementType.clickable || handle.eltype == ElementType.writable) {
                     WebElement elem = handle.findElement(driver);
@@ -232,7 +232,8 @@ public class Scanner {
                         handle.eltype = ElementType.noninteractive;
                     }
                 }
-                log.info("Fetched from cache as " + handle.eltype.name() + "\n");
+                log.info("Fetched from SQL as " + handle.eltype.name() + "\n");
+                Logger.cp("for", "fetched from SQL");
             } else {
                 //###### initial state replay
                 try {
@@ -256,9 +257,9 @@ public class Scanner {
 
                 handle.eltype = checkHandleType(driver, handle, oldHashes);
                 //###### caching
-                alphabet.add(handle);
+                Invoker.alphabet.add(handle);
                 log.info("Determined as " + handle.eltype.name() + "\n");
-
+                Logger.cp("for", "resolved with help of checker and pushed to SQL");
             }
             //###### preparing list of WebHandles for return
             //TODO return writables, but don't forget terminal
@@ -274,6 +275,7 @@ public class Scanner {
         log.report("Classified " + interactiveHandles.size() + " elements.\n");
 
         //###### finally, returning
+        Logger.cpd("returning");
         return interactiveHandles;
     }
 }

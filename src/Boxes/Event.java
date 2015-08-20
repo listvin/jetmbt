@@ -21,7 +21,7 @@ import java.util.List;
  * Created by user on 7/23/15.
  */
 public class Event extends Tickable{
-    private static Logger log = Logger.get(new Event(new WebHandle(Utils.createOwn404(), ""), null));
+    private static Logger log = Logger.get(new Event(new WebHandle(JetURL.createOwn404(), ""), null));
     /**This implements "memory-management" claimed above.*/
     private static HashMap<Event, Event> memory = new HashMap<>();
 
@@ -48,7 +48,7 @@ public class Event extends Tickable{
 
     /**Factory method for convenient creating of fake element. Will be terminal*/
     public static Event createTerminal(String name){
-        return creationFinalizer(new Event(new WebHandle(Utils.createOwn404(), name, ElementType.terminal), "")); //#hardcode
+        return creationFinalizer(new Event(new WebHandle(JetURL.createOwn404(), name, ElementType.terminal), "")); //#hardcode
     }
 
     public static Event create(WebHandle handle, String context){
@@ -86,12 +86,12 @@ public class Event extends Tickable{
         WebElement we = handle.findElement(driver);
         if (we == null){
             //TODO this place strongly interferes with driver's implicitly wait. So, I think, personal fails counter per handle needed.
-            log.error(handle.url.toString() + " | " + handle.xpath + "\n" +
+            log.error(handle.url.graphUrl() + " | " + handle.xpath + "\n" +
                     "Unable to .perform(WebDriver), cause search of element by stored selector is failed.");
             return false;
         }
         if (!we.isDisplayed() || !we.isEnabled()){
-            log.error(handle.url.toString() + " | " + handle.xpath + "\n" +
+            log.error(handle.url.graphUrl() + " | " + handle.xpath + "\n" +
                     "Failed to .perform(WebDriver), cause element not displayed or not enabled.");
             return false;
         }
@@ -111,5 +111,9 @@ public class Event extends Tickable{
         return obj instanceof Event
                 && context.equals(((Event)obj).context)
                 && handle.equals(((Event)obj).handle);
+    }
+    @Override
+    public String toString(){
+        return handle + (context.length() == 0 ? "" : " (" + context + ")");
     }
 }

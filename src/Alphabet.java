@@ -1,8 +1,7 @@
+import Boxes.JetURL;
 import Boxes.WebHandle;
 import Common.*;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -16,7 +15,7 @@ public interface Alphabet {
     /**
      * Method to look whether type of element specified by is
      * url and xpath is already known.
-     * @param handle WebHandle containing URL and XPath to search
+     * @param handle WebHandle containing JetURL and XPath to search
      *               for. eltype field MUST be set to unknown.
      * @return New WebHandle, based on old one with modified field
      * eltype if it is known. Otherwise Old WebHandle returned.
@@ -32,11 +31,11 @@ public interface Alphabet {
 
     /**
      * Purpose is the same as {@link #request(WebHandle)}, but with lower-level arguments.
-     * @param url - URL to search in database for
+     * @param url - JetURL to search in database for
      * @param xpath - Xpath to search for
      * @return ElementType.unknown if not cached, otherwise - cached value.
      */
-    ElementType request(URL url, String xpath);
+    ElementType request(JetURL url, String xpath);
 
     /**
      * Method for caching new testing results
@@ -49,22 +48,22 @@ public interface Alphabet {
     /**
      * Lower method for caching new testing results {@link #add(WebHandle)}
      * Changes element type if similar element present in DB. Otherwise - creates it.
-     * @param url - URL is not verified
+     * @param url - JetURL is not verified
      * @param xpath - Xpath also not verified
      * @param eltype - value to cache.
      */
-    void add(URL url, String xpath, ElementType eltype);
+    void add(JetURL url, String xpath, ElementType eltype);
 
     void close();
 
 
     /**
-     * Adds URL with specified hash, if entry already exists - replaces with new data
+     * Adds JetURL with specified hash, if entry already exists - replaces with new data
      * @param url
      * @param hash
      * @throws SQLException
      */
-    void addURL(URL url, String hash);
+    void addURL(JetURL url, String hash);
 
     /**
      * Returns all hashes of url
@@ -72,12 +71,12 @@ public interface Alphabet {
      * @return - Arraylist of all hashes
      * @throws SQLException
      */
-    List<String> getHashesByURL(URL url);
+    List<String> getHashesByURL(JetURL url);
 
     /**
-     * Get random URL from encountered.
+     * Get random JetURL from encountered.
      * @return
      * @throws SQLException
      */
-    URL getRandomURL();
+    JetURL getRandomURL();
 }

@@ -14,8 +14,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
@@ -132,31 +130,17 @@ public class Utils {
         driver.findElement(By.id("id_l.L.loginButton")).click();
     }
 
-    /**Factory for URL with suppressed MalformedURLException (in most cases in this project, we are sure that URL isn't malformed)*/
-    public static URL createURL(String url){
-        try {
-            return new URL(url);
-        } catch (MalformedURLException e){
-            log.exception(e);
-            return null;
-        }
-    }
-
-    public static URL createOwn404(){
-        return createURL("https://github.com/404");
-    }
-
     public static boolean interactive(ElementType eltype){
         //TODO add writables here
         return eltype == ElementType.clickable;
     }
 
-    /**
-     * Extract from given URL protocol + authority part + path,
-     * according to https://en.wikipedia.org/wiki/URI_scheme#Generic_syntax
-     */
-    public static String getSimpleLink(URL url){
-        if (url == null) return "";
-        return url.getProtocol() + "://" + url.getAuthority() + url.getPath();
+    public static String getJavaDefaultName(Object obj){
+        return obj.getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(obj));
+    }
+
+    public static String htmlShield(String s){
+        //TODO check it for graphviz
+        return s.replace("\"","&#34;").replace("&", "&#38;").replace("<","&lt;").replace("'","&apos;");
     }
 }

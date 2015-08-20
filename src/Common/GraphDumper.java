@@ -2,11 +2,10 @@ package Common;
 
 import Boxes.EFG;
 import Boxes.Event;
+import Boxes.JetURL;
 import Boxes.WebHandle;
-import org.apache.xpath.operations.Bool;
 
 import java.io.*;
-import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +29,7 @@ public class GraphDumper {
         } catch (InterruptedException | IOException e) {
             log.exception(e);
         }
-        colorMap.put(Utils.createOwn404().toString(), colorList[0]); //#hardcode
+        colorMap.put(JetURL.createOwn404().graphUrl(), colorList[0]); //#hardcode
     }
 
     private String generateName(Integer num){ return "dump#" + num.toString(); }
@@ -54,7 +53,7 @@ public class GraphDumper {
             {"cornflowerblue", "black"},
             {"maroon", "white"},
             {"cyan", "black"},
-            {"gray", "black"},
+            {"gray", "white"},
             {"gray29", "white"},
             {"antiquewhite", "black"},
             {"aquamarine", "black"},
@@ -114,7 +113,7 @@ public class GraphDumper {
                         "\t];\n",
                 nodeName, generateJMBTStamp(url, xpath, eltype, context, assignedToUrl, ticked), eltype,
                 colorMap.get(url)[1], colorMap.get(url)[0],
-                ch, xpath, url, url,
+                ch, Utils.htmlShield(xpath), Utils.htmlShield(url), Utils.htmlShield(url),
                 assignedToUrl ? "<U><B>&#128279;</B></U>" : "&#128279;");
     }
 
@@ -153,13 +152,13 @@ public class GraphDumper {
             nodeID.put(node, nodeID.size());
 
         //checking if we have a color assigned to event's url
-        if (!colorMap.containsKey(node.handle.url.toString())) {
-            orderedUrls.add(node.handle.url.toString());
-            colorMap.put(node.handle.url.toString(), colorList[colorMap.size() % colorList.length]);
+        if (!colorMap.containsKey(node.handle.url.graphUrl())) {
+            orderedUrls.add(node.handle.url.graphUrl());
+            colorMap.put(node.handle.url.graphUrl(), colorList[colorMap.size() % colorList.length]);
         }
 
         writer.print(generateHtmlNode(String.format("Node%d", nodeID.get(node)),
-                node.handle.url.toString(), node.handle.xpath, node.handle.eltype, node.handle.isAssignedToUrl(),
+                node.handle.url.graphUrl(), node.handle.xpath, node.handle.eltype, node.handle.isAssignedToUrl(),
                 node.isTicked(), node.context));
     }
 
@@ -207,7 +206,7 @@ public class GraphDumper {
                 int id = Integer.valueOf(m.group(1));
                 if (!pJMBThead.matcher(reader.readLine()).matches()) throw new IOException("not found /*JMBT record");
                 if (!(m = pUrl.matcher(reader.readLine())).matches()) throw new IOException("not found url: record");
-                URL url = Utils.createURL(m.group(1));
+                JetURL url = new JetURL(m.group(1));
                 if (!(m = pXpath.matcher(reader.readLine())).matches()) throw new IOException("not found xpath: record");
                 String xpath = m.group(1);
                 if (!(m = pEltype.matcher(reader.readLine())).matches()) throw new IOException("not found eltype: record");

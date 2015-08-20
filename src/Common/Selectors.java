@@ -23,7 +23,7 @@ public class Selectors {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    };
+    }
 
     public static List<String> getAllXpaths(WebDriver driver){
         Object response = (((JavascriptExecutor) driver).executeScript(ECMA_getAllXpaths));
