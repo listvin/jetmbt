@@ -11,8 +11,8 @@ public class Settings {
     public static final int maximumSingleExplicitWait = 3;
     public static final int maximumExplicitWaitInARow = 10;
     public static final int initialReplayFailThreshold = 50;
-    public static final int urlHasherSleep = 3000;
-    public static final int buildersCount = 15;
+    public static final int urlHasherSleep = 5000;
+    public static final int buildersCount = 12;
     public static final int depthLimit = 10;
     public static final int dumpsLimit = 10; //#hardcode
     public static final boolean dumpLimitEnabled = false;

@@ -13,6 +13,10 @@ import java.util.Objects;
 public class JetURL {
     private static Logger log = new Logger(new JetURL(), Logger.Level.all, Logger.Level.all);
 
+    public URL getUrl() {
+        return url;
+    }
+
     private URL url;
     public JetURL(String str_url){
         url = createURL(str_url);
@@ -78,9 +82,11 @@ public class JetURL {
 
     @Override
     public String toString(){
-        log.exception(new Exception("THIS SHIT IS FORBIDDEN FOR NOW"));
-        System.exit(-1);
-        return null;
+        //log.exception(new Exception("THIS SHIT IS FORBIDDEN FOR NOW"));
+        if(url == null){
+            return "wololo";
+        }
+        return url.toString();
     }
 
     public String toFullString(){
@@ -107,4 +113,5 @@ public class JetURL {
     public static boolean weaklyCompare(JetURL a, String b){
         return weaklyCompare(new JetURL(b), a);
     }
+
 }

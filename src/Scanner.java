@@ -178,14 +178,7 @@ public class Scanner {
     private int initialReplayFailCounter = 0;
 
     public List<WebHandle> scan(State baseState) { Logger.init();
-        driver.manage().deleteCookieNamed("YTSESSIONID");
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        Utils.login(driver);
-
+        Utils.resetSession(driver);
         explicitWaitLeft = Settings.maximumExplicitWaitInARow;
         log.debug(String.format("scan() invoked. baseState.url : %s, baseState.sequence.size() : %d\nStarted generating xpathes...", baseState.url.graphUrl(), baseState.sequence.size()));
 

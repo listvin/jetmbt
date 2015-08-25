@@ -156,4 +156,15 @@ public class Utils {
         return s.replace("\"","&#34;").replace("&", "&#38;").replace("<","&lt;").replace("'","&apos;");
     }
 
+    //#HARDCODE
+    public static void resetSession(WebDriver driver){
+        driver.manage().deleteCookieNamed("YTSESSIONID");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Utils.login(driver);
+
+    }
 }

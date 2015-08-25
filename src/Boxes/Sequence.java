@@ -4,6 +4,8 @@ import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -48,6 +50,9 @@ public class Sequence extends ArrayList<Event>{
      * @return true in case of successful play
      */
     public boolean play(WebDriver driver){
+        if(size() > 0){
+            driver.get(get(0).handle.url.toString());
+        }
         for(Event event : this) if (!event.perform(driver)) return false;
         return true;
     }
