@@ -4,11 +4,15 @@ import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 /**
  * Wrapping for List of Event-s with possibility of replay.
@@ -44,6 +48,8 @@ public class Sequence extends ArrayList<Event>{
         return temp;
     }
 
+
+
     /**
      * Plays stored sequence of events, throws NoSuchElementException if one of events can't be performed.
      * @param driver WebDriver in which sequence should be played.
@@ -54,6 +60,17 @@ public class Sequence extends ArrayList<Event>{
             driver.get(get(0).handle.url.toString());
         }
         for(Event event : this) if (!event.perform(driver)) return false;
+        return true;
+    }
+
+    public boolean play(WebDriver driver, BiPredicate<WebDriver, Event> checker){
+                if(size() > 0){
+            driver.get(get(0).handle.url.toString());
+        }
+        for(Event event : this){
+            if (!event.perform(driver)) return false;
+            if(!checker.test(driver, event)) return false;
+        }
         return true;
     }
 
