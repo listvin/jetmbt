@@ -1,9 +1,6 @@
 package Boxes;
 
-import Common.ElementType;
-import Common.GraphDumper;
-import Common.Logger;
-import Common.Utils;
+import Common.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -16,7 +13,7 @@ import java.util.*;
  */
 public class EFG {
     private Logger log = new Logger(this, Logger.Level.debug);
-    private GraphDumper dumper = new GraphDumper();
+    private GraphDumper dumper = new GraphVizSimpleDumper();
     private Random random = new Random(Common.Settings.randomSeed);
     private Map<Event, EdgeList> adjList = new HashMap<>();
     private Map<Event, EdgeList> revList = new HashMap<>();
@@ -119,20 +116,21 @@ public class EFG {
      * @return true in case of success
      */
     public boolean dump2dot(){
-        //TODO make it more readable
         try {
             dumper.initFile();
+            for (Event node : adjList.keySet()) dumper.presentNode(node);
             for (Event node : adjList.keySet()) dumper.addNode(node);
             for (Event node : adjList.keySet())
                 for (Edge edge : adjList.get(node))
                     dumper.addEdgeFromTo(node, edge.destination);
-            log.report(dumper.closeFile() + ".gv have been wrote to graphs folder.");
+            log.report(dumper.closeFile() + " have been wrote to graphs folder.");
             return true;
         } catch (Exception e){
             log.exception(e);
             return false;
         }
     }
+
 }
 
 

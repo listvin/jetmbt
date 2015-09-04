@@ -6,20 +6,28 @@ import Boxes.JetURL;
 import Boxes.WebHandle;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Class for convenient writing of EFG to viewable files.
- * 350% of GraphViz Java API functionality, lol
- * Created by listvin on 7/29/15.
+ * Created by user on 8/25/15.
  */
-public class GraphDumper {
-    private Runtime runtime = Runtime.getRuntime();
-    public final String folderName, path;
-    private Integer dumpNum = 0;
-    private Logger log = new Logger(this, Logger.Level.debug);
+public abstract class GraphDumper {
+    protected Runtime runtime = Runtime.getRuntime();
+    protected Logger log = new Logger(this, Logger.Level.debug);
+    protected Integer dumpNum = 0;
+    protected Integer lastInfoNodeNum = -1;
+    protected PrintWriter writer = null;
+    protected List<String> orderedUrls = new ArrayList<>();
+    protected Map<Event, Integer> nodeID = new HashMap<>();
+    protected ArrayList<Event> rNodeID = new ArrayList<>();
+    protected Process renderInstance;
+
+    public static String folderName, path;
     public GraphDumper() {
         folderName = Logger.folderName;
         path = "graphs/" + folderName + "/";
@@ -29,202 +37,54 @@ public class GraphDumper {
         } catch (InterruptedException | IOException e) {
             log.exception(e);
         }
-        colorMap.put(JetURL.createOwn404().graphUrl(), colorList[0]); //#hardcode
     }
 
-    private String generateName(Integer num){ return "dump#" + num.toString(); }
-    private String generateNewName(){ return generateName(++dumpNum); }
-    private String recoverLastName(){ return generateName(dumpNum); }
+    public static String customName;
+    public static void setCustomPath(String path, String name){
+        GraphDumper.path = path;
+        GraphDumper.customName = name;
+    }
 
-    private Map<String, String[]> colorMap = new HashMap<>();
-    private final String[][] colorList = {
-            {"black", "white"},
-            {"firebrick1", "black"},
-            {"chocolate1", "black"},
-            {"yellow", "black"},
-            {"lawngreen", "black"},
-            {"forestgreen", "white"},
-            {"cadetblue1", "black"},
-            {"dodgerblue", "white"},
-            {"blue", "white"},
-            {"indigo", "white"},
-            {"deeppink", "black"},
-            {"lightpink", "black"},
-            {"cornflowerblue", "black"},
-            {"maroon", "white"},
-            {"cyan", "black"},
-            {"gray", "white"},
-            {"gray29", "white"},
-            {"antiquewhite", "black"},
-            {"aquamarine", "black"},
-            {"darkolivegreen1", "black"},
-            {"limegreen", "white"},
-            {"brown", "white"},
-            {"aliceblue", "black"},
-            {"burlywood1", "black"},
-            {"white", "black"},
-    };
+    protected String generateName(Integer num){ return "dump#" + num.toString(); }
+    protected String generateNewName(){ return GraphDumper.customName == null ? generateName(++dumpNum) : GraphDumper.customName; }
+    protected String recoverLastName(){ return GraphDumper.customName == null ? generateName(dumpNum) : GraphDumper.customName; }
 
-    private String generateJMBTStamp(String url, String xpath, ElementType eltype, String context, Boolean assignedToUrl, Boolean ticked){
+    protected String generateJMBTStamp(String url, String xpath, ElementType eltype, String context, Boolean assignedToUrl, Boolean ticked){
         if (eltype == ElementType.info)
             return "";
         else
             return String.format(
                     "\t\t/*JMBT\n" +
-                    "\t\turl:%s\n" +
-                    "\t\txpath:%s\n" +
-                    "\t\teltype:%s\n" +
-                    "\t\tcontext:%s\n" +
-                    "\t\tassignedToUrl:%s\n" +
-                    "\t\tticked:%s\n" +
-                    "\t\tJMBT*/\n",
+                            "\t\turl:%s\n" +
+                            "\t\txpath:%s\n" +
+                            "\t\teltype:%s\n" +
+                            "\t\tcontext:%s\n" +
+                            "\t\tassignedToUrl:%s\n" +
+                            "\t\tticked:%s\n" +
+                            "\t\tJMBT*/\n",
                     url, xpath, eltype.name(), context == null ? "" : context,
                     assignedToUrl ? "true" : "false", ticked ? "true" : "false");
     }
+    public abstract void initFile() throws FileNotFoundException, UnsupportedEncodingException;
+    public abstract void addInfoNode(Integer num, String url, String label);
+    public void presentNode(Event node){
 
-    private String generateHtmlNode(String nodeName,
-                                    String url,
-                                    String xpath,
-                                    ElementType eltype,
-                                    Boolean assignedToUrl,
-                                    Boolean ticked,
-                                    String context){
-        String ch;
-        switch (eltype){
-            case unknown: ch = "&#9072;"; break;
-            case noninteractive: ch = "&#128683"; break;
-            case clickable: ch = "&#128432;"; break;
-            case writable: ch = "&#128430;"; break;
-            case info: ch = "&#128456;"; break; //really not ElementType
-            case terminal: ch = "&#9940;"; break;
-            default: ch = "&#9762;";
-        }
+    };
+    public abstract void addNode(Event node);
+    public abstract void addEdgeFromTo(Event source, Event destination);
+    public abstract String closeFile() throws IOException, InterruptedException;
 
-        return String.format(
-                "\t%s [\n" +
-                        "%s" +
-                        "\t\ttooltip=\"%s\"\n" +
-                        "\t\tfontcolor=\"%s\"\n" +
-                        "\t\tlabel=<<TABLE PORT=\"common\" border=\"0\" cellborder=\"1\" cellspacing=\"0\" bgcolor=\"%s\"><TR>\n" +
-                        "\t\t\t<TD cellpadding=\"0\"><FONT point-size=\"5\">%s</FONT></TD>\n" +
-                        "\t\t\t<TD cellpadding=\"1\"><FONT point-size=\"10\">$x(\"%s\")</FONT></TD>\n" +
-                        "\t\t\t<TD cellpadding=\"0\" href=\"%s\" tooltip=\"%s\"><FONT point-size=\"5\">%s</FONT></TD>\n" +
-                        "\t\t</TR></TABLE>>\n" +
-                        "\t];\n",
-                nodeName, generateJMBTStamp(url, xpath, eltype, context, assignedToUrl, ticked), eltype,
-                colorMap.get(url)[1], colorMap.get(url)[0],
-                ch, Utils.htmlShield(xpath), Utils.htmlShield(url), Utils.htmlShield(url),
-                assignedToUrl ? "<U><B>&#128279;</B></U>" : "&#128279;");
-    }
+    protected Pattern pUrl = Pattern.compile("\\s*url:(\\p{all}*)"); //1
+    protected Pattern pXpath = Pattern.compile("\\s*xpath:(\\p{all}*)"); //1
+    protected Pattern pEltype = Pattern.compile("\\s*eltype:(\\p{all}*)"); //1
+    protected Pattern pContext = Pattern.compile("\\s*context:(\\p{all}*)"); //1
+    protected Pattern pAssigned = Pattern.compile("\\s*assignedToUrl:(\\p{all}*)"); //1
+    protected Pattern pTicked = Pattern.compile("\\s*ticked:(\\p{all}*)"); //1
 
-    private String generateHtmlNode(String nodeName,
-                                    String url,
-                                    String xpath){
-        return generateHtmlNode(nodeName, url, xpath, ElementType.info, false, false, "");
-    }
-
-
-    private PrintWriter writer = null;
-    public void initFile() throws FileNotFoundException, UnsupportedEncodingException{
-        assert writer == null : "Have not closed file";
-        String name = generateNewName();
-        writer = new PrintWriter(path + name + ".gv", "UTF-8");
-        writer.printf("digraph EFG {\n" +
-                "\tnode [shape=plaintext]\n");
-    }
-
-    //TODO legend of a graph should be improved
-    private List<String> orderedUrls = new ArrayList<>();
-    private int lastInfoNodeNum = -1;
-    public void addInfoNode(Integer num, String url, String label){
-        writer.print(generateHtmlNode(String.format("Info%d", num), url, label));
-
-        //drawing edge to previous info node
-        if (lastInfoNodeNum != -1)
-            writer.printf("\tInfo%d -> Info%d [dir=none];\n", lastInfoNodeNum, num);
-        lastInfoNodeNum = num;
-    }
-
-    private Map<Event, Integer> nodeID = new HashMap<>();
-    public void addNode(Event node){
-        //checking if we have id for the node
-        if (!nodeID.containsKey(node))
-            nodeID.put(node, nodeID.size());
-
-        //checking if we have a color assigned to event's url
-        if (!colorMap.containsKey(node.handle.url.graphUrl())) {
-            orderedUrls.add(node.handle.url.graphUrl());
-            colorMap.put(node.handle.url.graphUrl(), colorList[colorMap.size() % colorList.length]);
-        }
-
-        writer.print(generateHtmlNode(String.format("Node%d", nodeID.get(node)),
-                node.handle.url.graphUrl(), node.handle.xpath, node.handle.eltype, node.handle.isAssignedToUrl(),
-                node.isTicked(), node.context));
-    }
-
-    public void addEdgeFromTo(Event source, Event destination){
-        writer.printf("\tNode%d:common -> Node%d:common;\n", nodeID.get(source), nodeID.get(destination));
-    }
-
-    private Process graphVizInstance;
-    public String closeFile() throws IOException, InterruptedException{
-        int i = 0; lastInfoNodeNum = -1;
-        for(String url : orderedUrls)
-            addInfoNode(++i, url, url);
-
-        writer.println("}\n");
-        writer.close();
-        writer = null;
-        String name = recoverLastName();
-        if (graphVizInstance == null || !graphVizInstance.isAlive()) {
-            String[] args = {"dot", "-Tsvg", path + name + ".gv", "-o", path + "graph" + ".svg"}; //#hardcode
-            graphVizInstance = runtime.exec(args); //we don't need .waitFor() in our case, do we?
-        }
-        return name;
-    }
-
-
-    private ArrayList<Event> rNodeID = new ArrayList<>();
-    Pattern pEdge = Pattern.compile("\\s*Node(\\d+):common\\s*->\\s*Node(\\d+):common;");//1,2
-    Pattern pNode = Pattern.compile("\\s*Node(\\d+)\\s*\\[");//1
-    Pattern pJMBThead = Pattern.compile("\\s*/\\*JMBT");
-    Pattern pUrl = Pattern.compile("\\s*url:(\\p{all}*)"); //1
-    Pattern pXpath = Pattern.compile("\\s*xpath:(\\p{all}*)"); //1
-    Pattern pEltype = Pattern.compile("\\s*eltype:(\\p{all}*)"); //1
-    Pattern pContext = Pattern.compile("\\s*context:(\\p{all}*)"); //1
-    Pattern pAssigned = Pattern.compile("\\s*assignedToUrl:(\\p{all}*)"); //1
-    Pattern pTicked = Pattern.compile("\\s*ticked:(\\p{all}*)"); //1
-    Pattern pJMBTtail = Pattern.compile("\\s*JMBT\\*/");
-    public void parseFile(EFG g, String path) throws IOException{
-        String s;
-        BufferedReader reader = new BufferedReader(new FileReader(path));
-        Matcher m;
-        while ((s = reader.readLine()) != null){
-            if ((m = pEdge.matcher(s)).matches())
-                g.addEdgeUnchecked(rNodeID.get(Integer.valueOf(m.group(1))), rNodeID.get(Integer.valueOf(m.group(2))));
-            else if ((m = pNode.matcher(s)).matches()) {
-                int id = Integer.valueOf(m.group(1));
-                if (!pJMBThead.matcher(reader.readLine()).matches()) throw new IOException("not found /*JMBT record");
-                if (!(m = pUrl.matcher(reader.readLine())).matches()) throw new IOException("not found url: record");
-                JetURL url = new JetURL(m.group(1));
-                if (!(m = pXpath.matcher(reader.readLine())).matches()) throw new IOException("not found xpath: record");
-                String xpath = m.group(1);
-                if (!(m = pEltype.matcher(reader.readLine())).matches()) throw new IOException("not found eltype: record");
-                ElementType eltype = ElementType.valueOf(m.group(1));
-                if (!(m = pContext.matcher(reader.readLine())).matches()) throw new IOException("not found context: record");
-                String context = m.group(1);
-                if (!(m = pAssigned.matcher(reader.readLine())).matches()) throw new IOException("not found assignedToUrl: record");
-                boolean assigned = Boolean.valueOf(m.group(1));
-                if (!(m = pTicked.matcher(reader.readLine())).matches()) throw new IOException("not found ticked: record");
-                boolean ticked = Boolean.valueOf(m.group(1));
-                if (!pJMBTtail.matcher(reader.readLine()).matches()) throw new IOException("not found JMBT*/ record");
-                Event event = Event.create(new WebHandle(url, xpath, eltype, assigned), context);
-                if (ticked) event.setTicked();
-                g.addEventUnchecked(event);
-                log.info("Have successfully read Node" + id + " from file.");
-                while (rNodeID.size() < id+1) rNodeID.add(null);
-                rNodeID.set(id, event);
-            }
-        }
+    public void parseFile(EFG g, String path) throws IOException {
+        log.error("can't read all graph files yet, trying to read as gv");
+        GraphVizHtmlDumper gvd = new GraphVizHtmlDumper();
+        gvd.parseFile(g, path);
+        log.report("gv-reading seems to be finished...");
     }
 }

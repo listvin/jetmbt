@@ -141,6 +141,10 @@ public class Utils {
 
     public static String htmlShield(String s){
         //TODO check it for graphviz
-        return s.replace("\"","&#34;").replace("&", "&#38;").replace("<","&lt;").replace("'","&apos;");
+        return s.replace("\"","&#34;").replace("&", "&#38;").replace("<","&#60;").replace("'","&#39;");
+    }
+
+    public static String dotShield(String s){
+        return s.replace("\"","'");
     }
 }
