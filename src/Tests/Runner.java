@@ -3,6 +3,7 @@ package Tests;
 import Boxes.*;
 import Common.ElementType;
 import Common.Utils;
+import org.bouncycastle.util.test.Test;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
@@ -86,20 +87,36 @@ public class Runner{
         A = event;
         Sequence path = graph.generateSinglePathTroughEvent(A, 20);
         Utils.setUpDriver(driver);
-        // TODO - mb throw exception from play?
-        while(! path.play(driver, (a, b) -> {
+        // TODO - remove dirty hacks.
+        // Current architecture: if replay failes, but it is not considered
+        // as test fail = just return false in checker
+        // iftest fails = raise exception, add it to failException list and use it as flag.
+        //Yes dirty - I know it...
+        final List<String> failExceptions = new ArrayList<>();
+        while(! path.play(driver, (driver1, event1) -> {
             try {
-                return singleEventPerformer(a, b);
-            } catch (Exception e) {
-                e.printStackTrace();
+                return singleEventPerformer(driver1, event1);
+            } catch (TestFailException e) {
+                failExceptions.add(e.getTestName());
             }
             return false;
         })){
+            if(!failExceptions.isEmpty()){
+                break;
+            }
             Utils.resetSession(driver);
             System.out.println("Next attempt");
             path = graph.generateSinglePathTroughEvent(A, 20);
         }
-        System.out.println("Finished testing");
+        if(failExceptions.isEmpty()) {
+            System.out.println("Finished testing");
+        }else{
+            System.out.println("Failed test: " + failExceptions.get(0));
+            System.out.println("Test path:");
+            System.out.println(path);
+        }
+
+
     }
 
     /**
@@ -143,7 +160,7 @@ public class Runner{
      * @return
      * @throws Exception
      */
-    private boolean singleEventPerformer(WebDriver driver, Event event) throws Exception {
+    private boolean singleEventPerformer(WebDriver driver, Event event) throws TestFailException {
         if(!event.perform(driver)) return false;
 
         if(!A.equals(event)){
@@ -153,13 +170,13 @@ public class Runner{
             for(Method method: entry.getValue().getClass().getDeclaredMethods()){
                 if(method.isAnnotationPresent(Tests.OnElementTest.class)){
                     if(!method.getReturnType().equals(boolean.class)){
-                        throw new Exception("All @OnElementTest annotated methods should have boolean return type");
+                        throw new TestFailException("All @OnElementTest annotated methods should have boolean return type");
                     }
                     try {
                         //TODO - check all methods on driver
                         if(!(boolean)method.invoke(entry.getValue(), driver)){
 
-                            throw new Exception("Failed test: "  + method.getName());
+                            throw new TestFailException("Failed test", method);
                         }
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         e.printStackTrace();

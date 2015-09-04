@@ -1,5 +1,6 @@
 package Boxes;
 
+import Tests.TestFailException;
 import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
@@ -69,7 +70,7 @@ public class Sequence extends ArrayList<Event>{
      * @param checker - this function MUST call event.perform and return true or false depending on further test checking
      * @return
      */
-    public boolean play(WebDriver driver, BiPredicate<WebDriver, Event> checker){
+    public boolean play(WebDriver driver, BiPredicate<WebDriver, Event> checker) throws TestFailException{
                 if(size() > 0){
             driver.get(get(0).handle.url.toString());
         }
