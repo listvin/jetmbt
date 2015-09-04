@@ -13,21 +13,42 @@ import java.util.*;
 
 /**
  * Created by user on 9/1/15.
+ * This class is desined for easy test construction
  */
 public class Runner{
+    /*
+     * processors - contains instances of processes and reference classes
+     */
     private final Map<Class<?>, Object> processors = new HashMap<>();
     private final EFG graph;
     private Event A;
     private Event B;
     private WebDriver driver;
+
+    /**
+     * You can create testing environment based on graph dump
+     * @param filePath - path to graph Dump
+     */
     public Runner(String filePath){
         graph = new EFG(filePath);
         driver = new FirefoxDriver();
     }
+
+    /**
+     * Or you can reuse driver
+     * @param filePath - path to graph dump
+     * @param driver - webdriver to use
+     */
     public Runner(String filePath, WebDriver driver){
         graph = new EFG(filePath);
         this.driver = driver;
     }
+
+
+    /**
+     * provide processor classes for tests
+     * @param processors
+     */
     public void addProcessors(Object... processors){
         for(Object obj: processors){
             addProcessor(obj);
@@ -35,10 +56,13 @@ public class Runner{
     }
 
 
-    public void addProcessor(Object processor){
+    private void addProcessor(Object processor){
         processors.put(processor.getClass(), processor);
     }
 
+    /**
+     * creates instances of missing processors
+     */
     private void instantiateMissingProcessors() {
         for (Map.Entry<Class<?>, Object> entry : processors.entrySet()) {
             if (entry.getValue() == null) {
@@ -51,14 +75,21 @@ public class Runner{
         }
     }
 
+
+    /**
+     * generates paths through single event and performs checks
+     * @param event - event to check on
+     * @throws Exception
+     */
     public void testSingleEvent(Event event) throws Exception {
         instantiateMissingProcessors();
         A = event;
-        Sequence path = graph.generateSinglePathTroughEvent(A, 30);
+        Sequence path = graph.generateSinglePathTroughEvent(A, 20);
         Utils.setUpDriver(driver);
+        // TODO - mb throw exception from play?
         while(! path.play(driver, (a, b) -> {
             try {
-                return singleEventChecker(a, b);
+                return singleEventPerformer(a, b);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -66,23 +97,55 @@ public class Runner{
         })){
             Utils.resetSession(driver);
             System.out.println("Next attempt");
-            path = graph.generateSinglePathTroughEvent(A, 100);
+            path = graph.generateSinglePathTroughEvent(A, 20);
         }
+        System.out.println("Finished testing");
     }
 
+    /**
+     * generates paths through single event and performs checks
+     * @param URL
+     * @param XPath
+     * @throws Exception
+     */
     public void testSingleEvent(String URL, String XPath) throws Exception {
         testSingleEvent(URL, XPath, "");
     }
 
+    /**
+     * generates paths through single event and performs checks
+     * @param URL
+     * @param XPath
+     * @param context
+     * @throws Exception
+     */
     public void testSingleEvent(String URL, String XPath, String context) throws Exception {
         testSingleEvent(URL, XPath, ElementType.clickable, context);
     }
 
+    /**
+     * generates paths through single event and performs checks
+     * @param URL
+     * @param XPath
+     * @param type
+     * @param context
+     * @throws Exception
+     */
     public void testSingleEvent(String URL, String XPath, ElementType type, String context) throws Exception {
         testSingleEvent(Event.create(new WebHandle(JetURL.createJetURL(URL), XPath, type), context));
     }
 
-    private boolean singleEventChecker(WebDriver driver, Event event) throws Exception {
+
+    /**
+     * function desined to perform tests. This function must call event.perform inside of it
+     * @param driver
+     * @param event
+     * @return
+     * @throws Exception
+     */
+    private boolean singleEventPerformer(WebDriver driver, Event event) throws Exception {
+        if(!event.perform(driver)) return false;
+
         if(!A.equals(event)){
            return true;
         }
@@ -94,13 +157,17 @@ public class Runner{
                     }
                     try {
                         //TODO - check all methods on driver
-                        System.out.println(method.invoke(entry.getValue()));
+                        if(!(boolean)method.invoke(entry.getValue(), driver)){
+
+                            throw new Exception("Failed test: "  + method.getName());
+                        }
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         e.printStackTrace();
                     }
                 }
             }
         }
+
         return true;
     }
 

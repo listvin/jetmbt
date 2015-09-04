@@ -1,11 +1,13 @@
 package Tests;
 
+import org.openqa.selenium.WebDriver;
+
 /**
  * Created by user on 9/1/15.
  */
 public class TestExample {
     @OnElementTest
-    boolean TestA(){
+    boolean TestA(WebDriver driver){
         System.out.println("wololo");
         return true;
     }

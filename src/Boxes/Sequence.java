@@ -63,12 +63,17 @@ public class Sequence extends ArrayList<Event>{
         return true;
     }
 
+    /**
+     * tests that checker condition is satisfied after each event
+     * @param driver
+     * @param checker - this function MUST call event.perform and return true or false depending on further test checking
+     * @return
+     */
     public boolean play(WebDriver driver, BiPredicate<WebDriver, Event> checker){
                 if(size() > 0){
             driver.get(get(0).handle.url.toString());
         }
         for(Event event : this){
-            if (!event.perform(driver)) return false;
             if(!checker.test(driver, event)) return false;
         }
         return true;
