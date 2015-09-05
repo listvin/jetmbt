@@ -147,4 +147,15 @@ public class Utils {
     public static String dotShield(String s){
         return s.replace("\"","'");
     }
+    
+    public static String base58(int x){
+		final String alpha = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+		StringBuilder sb = new StringBuilder();
+		while (x > 0){
+			sb.insert(0, alpha.charAt(x%58));
+			x /= 58;
+		}
+        if (sb.length() == 0) sb.append(alpha.charAt(0));
+        return sb.toString();
+	}
 }

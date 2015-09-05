@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class EFG {
     private Logger log = new Logger(this, Logger.Level.debug);
-    private GraphDumper dumper = new GraphVizSimpleDumper();
+    private GraphDumper dumper = new GraphDumper();
     private Random random = new Random(Common.Settings.randomSeed);
     private Map<Event, EdgeList> adjList = new HashMap<>();
     private Map<Event, EdgeList> revList = new HashMap<>();
@@ -118,11 +118,10 @@ public class EFG {
     public boolean dump2dot(){
         try {
             dumper.initFile();
-            for (Event node : adjList.keySet()) dumper.presentNode(node);
             for (Event node : adjList.keySet()) dumper.addNode(node);
             for (Event node : adjList.keySet())
                 for (Edge edge : adjList.get(node))
-                    dumper.addEdgeFromTo(node, edge.destination);
+                    dumper.addEdge(node, edge.destination);
             log.report(dumper.closeFile() + " have been wrote to graphs folder.");
             return true;
         } catch (Exception e){
