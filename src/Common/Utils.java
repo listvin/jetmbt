@@ -1,10 +1,7 @@
 package Common;
 
 import org.apache.commons.io.FileUtils;
-import org.openqa.selenium.By;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import javax.imageio.ImageIO;
@@ -112,22 +109,37 @@ public class Utils {
     }
 
     /**
+     * #Hardcode - login
+     */
+    public static void login(WebDriver driver){
+        driver.get("http://localhost:8080"); //#hardcode
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        driver.findElement(By.xpath("/html/body/div[4]/div[1]/div/div[1]/div[1]/div/div[3]/div/div[2]/button")).click();
+        driver.findElement(By.xpath("/html/body/div/div[1]/div/form/div[2]/div[2]/span/a/span")).click();
+    }
+
+    /**
      * perform login and parameter setup un specified driver
      * @param driver
      */
     public static void setUpDriver(WebDriver driver){
-        driver.manage().timeouts().implicitlyWait(750, TimeUnit.MILLISECONDS);
-        driver.manage().timeouts().pageLoadTimeout(4000, TimeUnit.MILLISECONDS);
+        driver.manage().timeouts().implicitlyWait(1000, TimeUnit.MILLISECONDS);
+        driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
         //driver.manage().timeouts().setScriptTimeout(15, TimeUnit.SECONDS);
 
 
         //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
-        driver.get("http://localhost:8080/login"); //#hardcode
-        log.report("Have logged in with root/root at\n\tlocalhost:8080/login\n");
+        login(driver);
+//        log.report("Have logged in with root/root at\n\tlocalhost:8080/login\n");
+//        driver.findElement(By.id("username")).sendKeys("root");
+//        driver.findElement(By.id("password")).sendKeys("root");
+//        driver.findElement(By.id("password")).sendKeys(Keys.RETURN);
 
-        driver.findElement(By.id("id_l.L.login")).sendKeys("root");
-        driver.findElement(By.id("id_l.L.password")).sendKeys("root");
-        driver.findElement(By.id("id_l.L.loginButton")).click();
+//        driver.findElement(By.id("id_l.L.loginButton")).click();
     }
 
     public static boolean interactive(ElementType eltype){
@@ -141,7 +153,19 @@ public class Utils {
 
     public static String htmlShield(String s){
         //TODO check it for graphviz
-        return s.replace("\"","&#34;").replace("&", "&#38;").replace("<","&#60;").replace("'","&#39;");
+        return s.replace("\"","&#34;").replace("&", "&#38;").replace("<","&lt;").replace("'","&apos;");
+    }
+
+    //#HARDCODE
+    public static void resetSession(WebDriver driver){
+        driver.manage().deleteCookieNamed("YTSESSIONID");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Utils.login(driver);
+
     }
 
     public static String dotShield(String s){

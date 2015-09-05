@@ -16,7 +16,7 @@ public abstract class Tickable{
      * Expected to be implemented by increasing inner
      * counter of an integer flag, showing the
      * instance is ticked. So, this is O(1) */
-    public void invalidateTicks(){ ++tickValue; }
+    public static void invalidateTicks(){ ++tickValue; }
     
     /**
      * First call sets first tick, the second -

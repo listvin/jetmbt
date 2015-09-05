@@ -1,6 +1,12 @@
 package Boxes;
 
+import Common.Utils;
+import org.openqa.selenium.ElementNotVisibleException;
+import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.WebDriver;
+
+import java.net.URL;
+import java.util.NoSuchElementException;
 
 /**
  * Immutable class to store in reach states of browsing experience.

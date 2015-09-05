@@ -172,6 +172,25 @@ public class PostgreSQLAlphabet implements Alphabet {
         }
         return null;
     }
+
+    @Override
+    public void setURLAcessable(WebHandle handle) {
+        Statement stmt = null;
+        try {
+            stmt = c.createStatement();
+            stmt.executeUpdate("UPDATE handles SET URL_access=TRUE WHERE url = '" + handle.url.graphUrl() + "' AND xpath = '" + handle.xpath + "'");
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public boolean isURLAcessable(WebHandle handle){
+        return false;
+    }
+
     //for testing purposes only
     public static void main(String args[]) throws MalformedURLException, SQLException {
         PostgreSQLAlphabet alphabet = new PostgreSQLAlphabet();

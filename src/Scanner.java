@@ -5,8 +5,11 @@ import Common.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Created by wimag on 7/23/15.
@@ -69,19 +72,23 @@ public class Scanner {
             Logger.cpd("verified opened url");
 
             //###### Storing data before tries to interact
-            oldHashes.add(Utils.hashPage(driver));
+
+
+//            oldHashes.add(Utils.hashPage(driver));
             String oldWindowHandle = driver.getWindowHandle();
             Logger.cpd("captured initial screenshot");
 
             //###### Performing action
             WebElement element2check = handle.findElement(driver);
-            if (element2check != null){
+            if (element2check != null)
                 try{
                     element2check.click();
                 } catch (WebDriverException wde) {
                     return ElementType.noninteractive;
                 }
-            } else {
+            else {
+                System.out.println("wolololo");
+
                 return ElementType.unknown; //smth bad happened and we lost him
             }
             Logger.cpd("performed action (click for now)");
@@ -129,38 +136,36 @@ public class Scanner {
             //###### returning
             if (oldHashes.contains(newHash))
                 return ElementType.noninteractive;
-            else
+            else {
+                //return ElementType.clickable;
+
+
+                //###### Checking writability
+                //TODO return writability check instead of simple clicker check above
+                //TODO More precise check for writable type. Mb separate?
+                /*Further code obviously was bounded inside some try-catches, which are lost now*/
+                if (driver.findElements(By.xpath(handle.xpath)).size() > 0) {
+                    WebElement element = handle.findElement(driver);
+                    if(true && element.isDisplayed()) {
+                        String oldValue =element.getAttribute("value");
+                        handle.findElement(driver).sendKeys("aba");
+                        driver.switchTo().defaultContent();
+                        String newValue = null;
+
+                        if (!driver.findElements(By.xpath(handle.xpath)).isEmpty()) {
+                            newValue = driver.findElement(By.xpath(handle.xpath)).getAttribute("value");
+                        }
+                        if ((newValue != null) && (!newValue.equals(oldValue))) {
+                            System.out.print("WOOOLOOOOOO, WRITABLE SHII11IIIT!!!");
+                            return ElementType.writable;
+                        }
+                    }
+                }
                 return ElementType.clickable;
 
-
-            //###### Checking writability
-            //TODO return writability check instead of simple clicker check above
-            //TODO More precise check for writable type. Mb separate?
-                /*Further code obviously was bounded inside some try-catches, which are lost now*/
-                /*if (driver.findElements(By.xpath(handle.xpath)).size() > 0) {
-                    String oldValue = handle.findElement(driver).getAttribute("value");
-                    handle.findElement(driver).sendKeys("aba");
-                    driver.switchTo().defaultContent();
-                    String newValue = null;
-
-                    if (!driver.findElements(By.xpath(handle.xpath)).isEmpty()) {
-                        newValue = driver.findElement(By.xpath(handle.xpath)).getAttribute("value");
-                    }
-                    if ((newValue != null) && (!newValue.equals(oldValue))) {
-                        return ElementType.writable;
-                    } else {
-                        if (oldHash.equals(newHash)) {
-                            return ElementType.noninteractive;
-                        }
-                        return ElementType.clickable;
-                    }
-                } else {
-                    return ElementType.clickable;
-                }*/
-
+            }
         } catch (WebDriverException e) {
             log.exception(e);
-            Logger.cpd("that's it. Smth exceptional happened in checker, and we returning unknown");
             return ElementType.unknown;
         }
     }
@@ -172,6 +177,7 @@ public class Scanner {
     private int initialReplayFailCounter = 0;
 
     public List<WebHandle> scan(State baseState) { Logger.init();
+        Utils.resetSession(driver);
         explicitWaitLeft = Settings.maximumExplicitWaitInARow;
         log.debug(String.format("scan() invoked. baseState.url : %s, baseState.sequence.size() : %d\nStarted generating xpathes...", baseState.url.graphUrl(), baseState.sequence.size()));
 
@@ -193,6 +199,13 @@ public class Scanner {
         Invoker.urlHasher.add(curUrl);
 
         //###### collecting all xpathes
+
+        //TODO: remove #HARDCODE wait
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         for (String xpath : Selectors.getAllXpaths(driver)) {
             allHandles.add(new WebHandle(curUrl, xpath));
         }
@@ -206,6 +219,7 @@ public class Scanner {
         //###### checking if it is possible to trunc!??!?!?!??!?????
         //TODO move it to reach of State
         List<String> knownHashes4thisPage = new ArrayList<>(Invoker.alphabet.getHashesByURL(curUrl));
+        boolean URLAccessable = knownHashes4thisPage.contains(oldHash);
         if (baseState.sequence.size() > 0 && knownHashes4thisPage.contains(oldHash)) {
             log.debug("Trunc to url performed: " + (curUrl != null ? curUrl.toFullString() : "null"));
             baseState.truncToURL(curUrl);
@@ -264,13 +278,16 @@ public class Scanner {
             //###### preparing list of WebHandles for return
             //TODO return writables, but don't forget terminal
             switch (handle.eltype) {
-                //case writable:
+                case writable:
                 case clickable:
                 case terminal:
                 //case unknown:
                     interactiveHandles.add(handle);
                     break;
             }
+        }
+        if(URLAccessable){
+            interactiveHandles.forEach(Invoker.alphabet::setURLAcessable);
         }
         log.report("Classified " + interactiveHandles.size() + " elements.\n");
 

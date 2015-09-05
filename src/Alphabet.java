@@ -79,4 +79,8 @@ public interface Alphabet {
      * @throws SQLException
      */
     JetURL getRandomURL();
+
+    void setURLAcessable(WebHandle handle);
+
+    boolean isURLAcessable(WebHandle handle);
 }
