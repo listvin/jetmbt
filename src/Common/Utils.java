@@ -153,7 +153,7 @@ public class Utils {
 
     public static String htmlShield(String s){
         //TODO check it for graphviz
-        return s.replace("\"","&#34;").replace("&", "&#38;").replace("<","&lt;").replace("'","&apos;");
+        return s/*.replace("\"","&#34;")*/.replace("&", "&#38;").replace("<","&lt;").replace("'","&apos;");
     }
 
     //#HARDCODE
@@ -173,11 +173,11 @@ public class Utils {
     }
     
     public static String base58(int x){
-		final String alpha = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+		final String alpha = "123456789abcdefghijkmnopqrstuvwxyz";
 		StringBuilder sb = new StringBuilder();
 		while (x > 0){
-			sb.insert(0, alpha.charAt(x%58));
-			x /= 58;
+			sb.insert(0, alpha.charAt(x%alpha.length()));
+			x /= alpha.length();
 		}
         if (sb.length() == 0) sb.append(alpha.charAt(0));
         return sb.toString();

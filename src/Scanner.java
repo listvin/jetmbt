@@ -121,7 +121,7 @@ public class Scanner {
             JetURL newURL = new JetURL(driver.getCurrentUrl());
 
             //TODO The next check seems to be rather boring... Need flow rule for this
-            if (newURL == null || !newURL.getHost().equals(handle.url.getHost()))
+            if (!newURL.getHost().equals(handle.url.getHost()))
                 return ElementType.terminal;
 
 
@@ -201,11 +201,7 @@ public class Scanner {
         //###### collecting all xpathes
 
         //TODO: remove #HARDCODE wait
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Utils.sleep(2000);
         for (String xpath : Selectors.getAllXpaths(driver)) {
             allHandles.add(new WebHandle(curUrl, xpath));
         }

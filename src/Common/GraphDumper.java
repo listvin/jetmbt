@@ -38,12 +38,13 @@ public class GraphDumper {
 
     private PrintWriter dotFile = null;
     private PrintWriter infoFile = null;
-    private PrintWriter jmbtFile = null; //todo implement this
+    private PrintWriter jgraphFile = null; //todo implement this
 
     private Map<Event, Integer> nodeID = new HashMap<>();
 
     private void writeDOTNode(Event node){
-        dotFile.printf("node_%d [tooltip=\"@%s\"; fillcolor=\"%s\"];\n", nodeID.get(node), Utils.base58(nodeID.get(node)), colorMap.get(node.handle.url.graphUrl()));
+        String shape = node.handle.isAssignedToUrl() ? "doubleoctagon" : "octagon";
+        dotFile.printf("node_%d [tooltip=\"@%s\"; fillcolor=\"%s\"; shape=\"%s\"];\n", nodeID.get(node), Utils.base58(nodeID.get(node)), colorMap.get(node.handle.url.graphUrl()), shape);
     }
     private void writeDOTEdge(Event src, Event dst){
         dotFile.printf("node_%d -> node_%d [color=\"%s90:%s90;0.5\"]; \n", nodeID.get(src), nodeID.get(dst), colorMap.get(dst.handle.url.graphUrl()), colorMap.get(src.handle.url.graphUrl()));
@@ -53,26 +54,23 @@ public class GraphDumper {
         infoFile.println("\t<TD bgcolor=" + colorMap.get(node.handle.url.graphUrl()) + "><FONT color=black> @" + Utils.base58(nodeID.get(node)) + " </FONT></TD>");
         infoFile.println("\t<TD><FONT color=white> " + Utils.htmlShield(node.handle.url.graphUrl()) + " </FONT></TD>");
         infoFile.println("\t<TD><FONT color=white> " + Utils.htmlShield(node.handle.xpath) + " </FONT></TD>");
+        infoFile.println("\t<TD><FONT color=white> " + node.isTicked() + " </FONT></TD>");
         infoFile.println("\t<TD><FONT color=white> " + node.handle.eltype.name() + " </FONT></TD>");
         infoFile.println("\t<TD><FONT color=white> " + node.handle.isAssignedToUrl() + " </FONT></TD>");
         infoFile.println("\t<TD><FONT color=white> " + Utils.htmlShield(node.context) + " </FONT></TD>");
         infoFile.println("</TR>");
     }
-    private String genJMBTStamp(Event node){
-        if (node.handle.eltype == ElementType.info)
-            return "";
-        else
-            return String.format(
-                    "\t\t/*JMBT\n" +
-                            "\t\turl:%s\n" +
-                            "\t\txpath:%s\n" +
-                            "\t\teltype:%s\n" +
-                            "\t\tcontext:%s\n" +
-                            "\t\tassignedToUrl:%s\n" +
-                            "\t\tticked:%s\n" +
-                            "\t\tJMBT*/\n",
-                    node.handle.url.graphUrl(), node.handle.xpath, node.handle.eltype.name(), node.context == null ? "" : node.context,
-                    node.handle.isAssignedToUrl() ? "true" : "false", node.isTicked() ? "true" : "false");
+    private void writeJNode(Event node){
+        jgraphFile.printf("%d%s|%c%c%c\n", nodeID.get(node), node.handle.eltype.name(),
+                node.isTicked() ? 'T' : 't',
+                node.handle.isAssignedToUrl() ? 'A' : 'a',
+                !node.context.isEmpty() ? 'C' : 'c');
+        jgraphFile.println(node.handle.url.graphUrl());
+        jgraphFile.println(node.handle.xpath);
+        if (!node.context.isEmpty()) jgraphFile.println(node.context);
+    }
+    private void writeJEdge(Event src, Event dst){
+        jgraphFile.println(nodeID.get(src) + ">" + nodeID.get(dst));
     }
 
 
@@ -87,9 +85,9 @@ public class GraphDumper {
         printer.close();
     }
 
-    private boolean closed = true;
     public void initFile() throws FileNotFoundException{
         String name = generateNewName();
+        jgraphFile = new PrintWriter(path + name + ".jgraph");
         dotFile = new PrintWriter(path + name + ".gv");
         dotFile.println("digraph EFG {\n" +
                 "\tgraph [\n" +
@@ -108,8 +106,16 @@ public class GraphDumper {
                 "\t]");
         infoFile = new PrintWriter(path + name + ".list.html");
         infoFile.println("<body bgcolor=black> <TABLE border=0 cellspacing=2>");
+        infoFile.println("<TR>");
+        infoFile.println("\t<TD><FONT color=white><b> @_B58 </b></FONT></TD>");
+        infoFile.println("\t<TD><FONT color=white><b> URL </b></FONT></TD>");
+        infoFile.println("\t<TD><FONT color=white><b> XPath </b></FONT></TD>");
+        infoFile.println("\t<TD><FONT color=white><b> isTicked </b></FONT></TD>");
+        infoFile.println("\t<TD><FONT color=white><b> eltype </b></FONT></TD>");
+        infoFile.println("\t<TD><FONT color=white><b> isAssigned </b></FONT></TD>");
+        infoFile.println("\t<TD><FONT color=white><b> context </b></FONT></TD>");
+        infoFile.println("</TR>");
     }
-    private boolean writingNodes = false;
     public void addNode(Event node){
         //checking if we have id for the node
         if (!nodeID.containsKey(node))
@@ -121,12 +127,13 @@ public class GraphDumper {
             colorMap.put(node.handle.url.graphUrl(), colorList[colorMap.size() % colorList.length]);
         }
 
+        writeJNode(node);
         writeDOTNode(node);
         writeInfoRow(node);
         //writeJMBTStamp(node);
     }
-    private boolean writingEdges = false;
     public void addEdge(Event source, Event destination){
+        writeJEdge(source, destination);
         writeDOTEdge(source, destination);
     }
     public String closeFile() throws FileNotFoundException{
@@ -146,49 +153,39 @@ public class GraphDumper {
                 log.exception(e);
             }
         }
+        jgraphFile.close();
+        jgraphFile = null;
         return name;
     }
 
     private ArrayList<Event> rNodeID = new ArrayList<>();
-    private Pattern pEdge = Pattern.compile("\\s*Node(\\d+):common\\s*->\\s*Node(\\d+):common;");//1,2
-    private Pattern pNode = Pattern.compile("\\s*Node(\\d+)\\s*\\[");//1
-    private Pattern pJMBThead = Pattern.compile("\\s*/\\*JMBT");
-    private Pattern pJMBTtail = Pattern.compile("\\s*JMBT\\*/");
-    private Pattern pUrl = Pattern.compile("\\s*url:(\\p{all}*)"); //1
-    private Pattern pXpath = Pattern.compile("\\s*xpath:(\\p{all}*)"); //1
-    private Pattern pEltype = Pattern.compile("\\s*eltype:(\\p{all}*)"); //1
-    private Pattern pContext = Pattern.compile("\\s*context:(\\p{all}*)"); //1
-    private Pattern pAssigned = Pattern.compile("\\s*assignedToUrl:(\\p{all}*)"); //1
-    private Pattern pTicked = Pattern.compile("\\s*ticked:(\\p{all}*)"); //1
+    //next two strings after pNode-matching string should contain url and xpath correspondingly. If 5th group is set to 'C', then third string should contain context.
+    private Pattern pNode = Pattern.compile("(\\d+)(\\p{Alpha}+)\\|([Tt])([Aa])([Cc])");
+    private Pattern pEdge = Pattern.compile("(\\d+)>(\\d+)");
     public void parseFile(EFG g, String path) throws IOException{
         String s;
         BufferedReader reader = new BufferedReader(new FileReader(path));
         Matcher m;
         while ((s = reader.readLine()) != null){
-            if ((m = pEdge.matcher(s)).matches())
+            if ((m = pEdge.matcher(s)).matches()) {
                 g.addEdgeUnchecked(rNodeID.get(Integer.valueOf(m.group(1))), rNodeID.get(Integer.valueOf(m.group(2))));
-            else if ((m = pNode.matcher(s)).matches()) {
+            } else if ((m = pNode.matcher(s)).matches()) {
                 int id = Integer.valueOf(m.group(1));
-                if (!pJMBThead.matcher(reader.readLine()).matches()) throw new IOException("not found /*JMBT record");
-                if (!(m = pUrl.matcher(reader.readLine())).matches()) throw new IOException("not found url: record");
-                JetURL url = new JetURL(m.group(1));
-                if (!(m = pXpath.matcher(reader.readLine())).matches()) throw new IOException("not found xpath: record");
-                String xpath = m.group(1);
-                if (!(m = pEltype.matcher(reader.readLine())).matches()) throw new IOException("not found eltype: record");
-                ElementType eltype = ElementType.valueOf(m.group(1));
-                if (!(m = pContext.matcher(reader.readLine())).matches()) throw new IOException("not found context: record");
-                String context = m.group(1);
-                if (!(m = pAssigned.matcher(reader.readLine())).matches()) throw new IOException("not found assignedToUrl: record");
-                boolean assigned = Boolean.valueOf(m.group(1));
-                if (!(m = pTicked.matcher(reader.readLine())).matches()) throw new IOException("not found ticked: record");
-                boolean ticked = Boolean.valueOf(m.group(1));
-                if (!pJMBTtail.matcher(reader.readLine()).matches()) throw new IOException("not found JMBT*/ record");
-                Event event = Event.create(new WebHandle(url, xpath, eltype, assigned), context);
+                ElementType eltype = ElementType.valueOf(m.group(2));
+                boolean ticked = m.group(3).equals("T");
+                boolean assigned = m.group(4).equals("A");
+                boolean haveContext = m.group(5).equals("C");
+                JetURL jurl = new JetURL(reader.readLine());
+                String xpath = reader.readLine();
+                String context = haveContext ? reader.readLine() : "";
+                Event event = Event.create(new WebHandle(jurl, xpath, eltype, assigned), context);
                 if (ticked) event.setTicked();
                 g.addEventUnchecked(event);
                 log.info("Have successfully read Node" + id + " from file.");
                 while (rNodeID.size() < id+1) rNodeID.add(null);
                 rNodeID.set(id, event);
+            } else {
+                throw new IOException("critical error occured while reading from file: " + s);
             }
         }
     }
