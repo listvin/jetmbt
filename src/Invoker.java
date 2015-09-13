@@ -69,11 +69,11 @@ public class Invoker {
         }
     }
     public static boolean shutdown = false;
-    private static boolean expectingRequest = false;
+    private static int expectingRequest = 0;
     /**@return true and uses parameters if there is available slots for Builders, false otherwise*/
     public static boolean ifExpecting(Event prev, State start, int depth){
-        if (expectingRequest){
-            expectingRequest = false;
+        if (expectingRequest > 0){
+            --expectingRequest;
             requests.add(new BuilderRequest(prev, start, depth));
             return true;
         } else return false;
@@ -105,11 +105,12 @@ public class Invoker {
 
 
         while (!Thread.interrupted()){
-            for (WrappedBuilder wBuilder : builders)
-                if (wBuilder.stillNothingToDo()) {
-                    if (!expectingRequest) log.info("setting expectation trigger to true");
-                    expectingRequest = true;
-                }
+            for (WrappedBuilder wBuilder : builders) {
+                int temp = 0;
+                if (wBuilder.stillNothingToDo())
+                    ++temp;
+                expectingRequest = temp;
+            }
             if (shutdown) break;
             sleep(300);
         }
