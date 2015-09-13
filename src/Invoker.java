@@ -1,7 +1,6 @@
 import Boxes.*;
 import Common.Logger;
 import Common.Settings;
-import Common.Utils;
 
 import java.net.MalformedURLException;
 import java.util.concurrent.BlockingQueue;
@@ -61,11 +60,11 @@ public class Invoker {
         }
         void close(){
             if (isAlive()) thread.interrupt();
-            if (scanner != null) scanner.close();
             try { thread.join(); }
             catch (InterruptedException e) {
                 log.error("interrupted while closing builder");
             }
+            scanner.close();
         }
     }
     public static boolean shutdown = false;
@@ -111,7 +110,7 @@ public class Invoker {
                     ++temp;
                 expectingRequest = temp;
             }
-            if (shutdown) break;
+            if (shutdown || Event.getGlobalTicksCount() == g.getNodesCount()) break;
             sleep(300);
         }
 

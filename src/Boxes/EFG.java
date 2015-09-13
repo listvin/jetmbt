@@ -4,19 +4,12 @@ import Common.ElementType;
 import Common.GraphDumper;
 import Common.Logger;
 import Common.Utils;
-import com.sun.istack.internal.Nullable;
-import org.apache.commons.lang3.ObjectUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import Common.*;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.IntStream;
 
 /**
  * This is implementation of a holder for event flow graph.
@@ -31,8 +24,7 @@ public class EFG {
     private Map<Event, EdgeList> adjList = new HashMap<>();
     private Map<Event, EdgeList> revList = new HashMap<>();
 
-    public EFG() {
-    }
+    public EFG() {}
 
     public EFG(String path) {
         try {
@@ -44,14 +36,13 @@ public class EFG {
     }
 
     //TODO turn this in use instead of builder's inside search with check through isScannedOnce(Event)
-    public Event pickStart() {
-        for (Event node : adjList.keySet())
-            if (!node.isTicked()) {
-                node.setTicked();
-                return node;
-            }
-        return null;
-    }
+//    private void starterBfs(){
+//
+//    }
+//    public BuilderRequest pickStart() {
+//        if (getNodesCount() == Event.getGlobalTicksCount()) return null;
+//
+//    }
 
     public boolean isScannedOnce(Event event) {
         return adjList.containsKey(event) && adjList.get(event).size() > 0;
@@ -153,6 +144,8 @@ public class EFG {
             return false;
         }
     }
+
+    public int getNodesCount(){ return adjList.size();}
 
     public Sequence generateSinglePathBetweenEvents(Event a, Event b, int length) {
         return generatePathsBetweenEvents(a, b, 1, length).get(0);
@@ -422,7 +415,6 @@ public class EFG {
     public void run() {
         validate();
     }
-
     public void cnt() {
         int ct = 0;
         int vs = 0;

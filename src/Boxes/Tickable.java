@@ -9,19 +9,27 @@ package Boxes;
  */
 public abstract class Tickable{
     private static int tickValue = 1;
+    private static int ticks = 0;
     private int tick0 = 0, tick1 = 0;
-    
+
     /**
      * This invalidates all tick-marks on all edges.
      * Expected to be implemented by increasing inner
      * counter of an integer flag, showing the
      * instance is ticked. So, this is O(1) */
-    public static void invalidateTicks(){ ++tickValue; }
+    public static void invalidateTicks(){ ticks = 0; ++tickValue; }
+
+    /**
+     * @return how much times {@link #setTicked()}
+     * was invoked since last invalidation
+     */
+    public static int getGlobalTicksCount(){ return ticks; }
     
     /**
      * First call sets first tick, the second -
      * second. Only two ticks supported at the moment. */
     public void setTicked() {
+        ++ticks;
         if (isTicked()) tick1 = tickValue;
         else tick0 = tickValue;
     }
@@ -34,5 +42,5 @@ public abstract class Tickable{
     
     /** 
      * @return 0 if not ticked, 1 if ticked once, 2 - otherwise */
-    public int getTicksCount() { return (isTicked() ? (isTickedTwice() ? 2 : 1) : 0); }
+    public int getTimesTicked() { return (isTicked() ? (isTickedTwice() ? 2 : 1) : 0); }
 }
