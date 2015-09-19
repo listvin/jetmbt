@@ -1,12 +1,12 @@
 CREATE SEQUENCE event_id;
 CREATE TYPE element_type AS ENUM ('unknown', 'noninteractive', 'clickable', 'writable', 'terminal');
 DROP TABLE handles;
-DROP TABLE urls;
 CREATE TABLE IF NOT EXISTS handles
 (
   url VARCHAR,
   xpath VARCHAR,
-  eltype element_type
+  eltype element_type,
+  URL_access BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS urls
