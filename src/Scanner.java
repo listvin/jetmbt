@@ -144,23 +144,23 @@ public class Scanner {
                 //TODO return writability check instead of simple clicker check above
                 //TODO More precise check for writable type. Mb separate?
                 /*Further code obviously was bounded inside some try-catches, which are lost now*/
-                if (driver.findElements(By.xpath(handle.xpath)).size() > 0) {
-                    WebElement element = handle.findElement(driver);
-                    if(true && element.isDisplayed()) {
-                        String oldValue =element.getAttribute("value");
-                        handle.findElement(driver).sendKeys("aba");
-                        driver.switchTo().defaultContent();
-                        String newValue = null;
-
-                        if (!driver.findElements(By.xpath(handle.xpath)).isEmpty()) {
-                            newValue = driver.findElement(By.xpath(handle.xpath)).getAttribute("value");
-                        }
-                        if ((newValue != null) && (!newValue.equals(oldValue))) {
-                            System.out.print("WOOOLOOOOOO, WRITABLE SHII11IIIT!!!");
-                            return ElementType.writable;
-                        }
-                    }
-                }
+//                if (driver.findElements(By.xpath(handle.xpath)).size() > 0) {
+//                    WebElement element = handle.findElement(driver);
+//                    if(true && element.isDisplayed()) {
+//                        String oldValue =element.getAttribute("value");
+//                        handle.findElement(driver).sendKeys("aba");
+//                        driver.switchTo().defaultContent();
+//                        String newValue = null;
+//
+//                        if (!driver.findElements(By.xpath(handle.xpath)).isEmpty()) {
+//                            newValue = driver.findElement(By.xpath(handle.xpath)).getAttribute("value");
+//                        }
+//                        if ((newValue != null) && (!newValue.equals(oldValue))) {
+//                            System.out.print("WOOOLOOOOOO, WRITABLE SHII11IIIT!!!");
+//                            return ElementType.writable;
+//                        }
+//                    }
+//                }
                 return ElementType.clickable;
 
             }
@@ -228,6 +228,7 @@ public class Scanner {
         }};
 
         int cc = 0;
+        boolean f = false;
         for (WebHandle handle : allHandles) { Logger.init("for");
             if(cc++ % 10 == 0) log.debug("processed " + cc + " handles");
             log.info("XPATH for element being tested: " + handle.xpath);
@@ -247,7 +248,9 @@ public class Scanner {
             } else {
                 //###### initial state replay
                 try {
-                    baseState.reach(driver);
+                    if(!f) {
+                        baseState.reach(driver);
+                    }
                 } catch (WebDriverException e) {
                     log.error("Smth really bad happened while initial sequence replay.");
                     log.exception(e);
@@ -266,6 +269,9 @@ public class Scanner {
                 //###### now checking
 
                 handle.eltype = checkHandleType(driver, handle, oldHashes);
+                if(handle.eltype == ElementType.noninteractive){
+                    f = true;
+                }
                 //###### caching
                 Invoker.alphabet.add(handle);
                 log.info("Determined as " + handle.eltype.name() + "\n");
