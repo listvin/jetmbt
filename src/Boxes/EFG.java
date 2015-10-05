@@ -445,19 +445,17 @@ public class EFG {
         int ct = 0;
         int vs = 0;
         for (Event ev : adjList.keySet()) {
-            if (adjList.get(ev).size() > 0) {
+            if (adjList.get(ev).size() == 0 && ev.handle.eltype != ElementType.terminal) {
                 ct++;
-                System.out.println(ev.handle.url.toString());
-            }
-            if (ev.isTicked()) {
-                vs++;
-            }
-            if (ev.isTicked() && adjList.get(ev).size() == 0) {
                 System.out.println(ev);
             }
+            if (ev.handle.eltype == ElementType.terminal) {
+                vs++;
+            }
+
         }
-        System.out.println("Non empty edge lists " + ct);
-        System.out.println("Ticked events " + vs);
+        System.out.println("Leafs " + ct);
+        System.out.println("Terminal events " + vs);
         System.out.println("Total events " + adjList.size());
     }
     public void validate(){
@@ -482,8 +480,8 @@ public class EFG {
     }
     public static void main(String[] args) {
         EFG g = new EFG(args[0]);
-        g.run();
-        //g.cnt();
+        //g.run();
+        g.cnt();
     }
 
 }
