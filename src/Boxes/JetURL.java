@@ -5,7 +5,6 @@ import Common.Settings;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Objects;
 
 /**
  * Created by user on 8/19/15.
@@ -49,7 +48,7 @@ public class JetURL {
     }
 
     public static JetURL createOwn404(){
-        return new JetURL(Settings.Own404);
+        return new JetURL(Settings.own404);
     }
 
     /**

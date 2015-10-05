@@ -12,10 +12,11 @@ public class Settings {
     public static final int maximumExplicitWaitInARow = 10;
     public static final int initialReplayFailThreshold = 50;
     public static final int urlHasherSleep = 5000;
-    public static final int buildersCount = 12;
+    public static final int buildersCount = 8;
     public static final int depthLimit = 10;
     public static final int dumpsLimit = 10; //#hardcode
     public static final boolean dumpLimitEnabled = false;
-    public static final String Own404 = "https://github.com/404";
+    public static final String own404 = "https://github.com/404";
+    public static final boolean yt525mode = true;
 
 }

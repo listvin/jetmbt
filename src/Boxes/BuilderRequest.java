@@ -5,6 +5,7 @@ package Boxes;
  * Created by listvin on 8/18/15.
  */
 public class BuilderRequest {
+    //TODO remove BuilderRequest at all
     public Event prev;
     public State start;
     public int depth;

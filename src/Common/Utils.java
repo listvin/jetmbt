@@ -2,7 +2,6 @@ package Common;
 
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.*;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -19,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  * Created by user on 7/24/15.
  */
 public class Utils {
-    static Logger log = Logger.get(new Utils());
+    static Logger log = new Logger(new Utils(), Logger.Level.all, Logger.Level.all);
 
     public static void sleep(long millis){
         try {
@@ -108,38 +107,39 @@ public class Utils {
 
     }
 
-    /**
-     * #Hardcode - login
-     */
-    public static void login(WebDriver driver){
-        driver.get("http://localhost:8080"); //#hardcode
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public static void login(WebDriver driver){ //#hardcode
+        if (Settings.yt525mode) {login525(driver); return;}
+        log.info("NewTrack mode selected by ?default.");
+        driver.get("http://localhost:8080");
+        sleep(2000);
         driver.findElement(By.xpath("/html/body/div[4]/div[1]/div/div[1]/div[1]/div/div[3]/div/div[2]/button")).click();
         driver.findElement(By.xpath("/html/body/div/div[1]/div/form/div[2]/div[2]/span/a/span")).click();
+//        //logging in as root
+//        driver.findElement(By.id("username")).sendKeys("root");
+//        driver.findElement(By.id("password")).sendKeys("root");
+//        driver.findElement(By.id("password")).sendKeys(Keys.RETURN);
+//        driver.findElement(By.id("id_l.L.loginButton")).click();
+        log.report("Have logged in as guest at\n\tlocalhost:8080\n");
+    }
+    public static void login525(WebDriver driver) { //#hardcode
+        log.warning("YouTrack 5.2.5 mode is active.");
+        driver.get("http://localhost:8080/login");
+        driver.findElement(By.id("id_l.L.login")).sendKeys("root");
+        driver.findElement(By.id("id_l.L.password")).sendKeys("root");
+        driver.findElement(By.id("id_l.L.loginButton")).click();
+        log.report("Have logged in with root/root at\n\tlocalhost:8080/login\n");
     }
 
     /**
      * perform login and parameter setup un specified driver
      * @param driver
      */
-    public static void setUpDriver(WebDriver driver){
+    public static void setUpDriver(WebDriver driver) {
         driver.manage().timeouts().implicitlyWait(1000, TimeUnit.MILLISECONDS);
         driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
         //driver.manage().timeouts().setScriptTimeout(15, TimeUnit.SECONDS);
-
-
-        //TODO ACHTUNG!!! THIS (hardcoded login) SHOULD NOT EXIST!!!!
+        //TODO remove hardcoded logging in
         login(driver);
-//        log.report("Have logged in with root/root at\n\tlocalhost:8080/login\n");
-//        driver.findElement(By.id("username")).sendKeys("root");
-//        driver.findElement(By.id("password")).sendKeys("root");
-//        driver.findElement(By.id("password")).sendKeys(Keys.RETURN);
-
-//        driver.findElement(By.id("id_l.L.loginButton")).click();
     }
 
     public static boolean interactive(ElementType eltype){
@@ -156,8 +156,7 @@ public class Utils {
         return s/*.replace("\"","&#34;")*/.replace("&", "&#38;").replace("<","&lt;").replace("'","&apos;");
     }
 
-    //#HARDCODE
-    public static void resetSession(WebDriver driver){
+    public static void resetSession(WebDriver driver){ //#HARDCODE
         driver.manage().deleteCookieNamed("YTSESSIONID");
         try {
             Thread.sleep(1000);

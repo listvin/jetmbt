@@ -19,11 +19,12 @@ public class State {
     /**Makes state based on given url.*/
     public State(JetURL url){
         this.url = url;
+        this.sequence = new Sequence();
     }
 
     /**Makes state based on given url and COPY of sent sequence.*/
     public State(JetURL url, Sequence sequence){
-        this(url);
+        this.url = url;
         this.sequence = new Sequence(sequence);
     }
 

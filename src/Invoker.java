@@ -84,24 +84,30 @@ public class Invoker {
     /**@param args Use --url url_to_parse or --file file_to_load_graph_from.*/
     public static void main(String [] args) throws MalformedURLException {
 
-        State startState;
         //TODO embed commons CLI here
         switch (args[0]){
             case "--url":
                 g = new EFG();
-                startState = new State(new JetURL(args[1]), new Sequence());
+                requests.add(new BuilderRequest(Event.createRoot(args[1]), new State(new JetURL(args[1])), 0));
                 break;
-            case "--file":
+            case "--develop":
                 g = new EFG(args[1]);
-                //TODO we need search of start point to continue building graph
-                startState = null; //lol, null here seems to be really dangerous guy!)
+                BuilderRequest br = g.pickStart();
+                if (br == null) {
+                    System.err.println("Graph seems to be finished. At least, all nodes are visited, or non-visited are unreachable.");
+                    shutdown = true;
+                } else {
+                    requests.add(br);
+                }
+                break;
+            case "--redump":
+                g = new EFG(args[1]);
+                g.dump2dot();
                 break;
             default:
-                System.err.print("Use --url <url to parse> or --file <file to load graph from>");
+                System.err.print("Use --url <url to parse> or --develop <file to load graph from>");
                 return;
         }
-        requests.add(new BuilderRequest(Event.createTerminal("BUILDINGROOT"), startState, 0)); //#hardcode
-
 
         while (!Thread.interrupted()){
             for (WrappedBuilder wBuilder : builders) {
@@ -111,6 +117,14 @@ public class Invoker {
                 expectingRequest = temp;
             }
             if (shutdown || Event.getGlobalTicksCount() == g.getNodesCount()) break;
+            if (expectingRequest == Settings.buildersCount) {
+                BuilderRequest br = g.pickStart();
+                if (br == null){
+                    shutdown = true;
+                } else {
+                    ifExpecting(br.prev, br.start, br.depth);
+                }
+            }
             sleep(300);
         }
 

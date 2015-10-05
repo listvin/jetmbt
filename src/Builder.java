@@ -27,6 +27,7 @@ public class Builder implements Runnable{
     private static int dumps = 0;
     /**
      * @param prev - this called "prev" because in browser this event was already performed. For usual dfs this called "cur"
+     *             //TODO remove prev. Now BUILDINGROOT seems to be valid Event, any other reasons to left "prev" here?
      * @param cur - State characterises shortest way to the state, corresponding to current dfs invocation
      * @param depth - length of the route made by dfs (not one stored in cur.sequence, but real one which is greater or equal)
      */

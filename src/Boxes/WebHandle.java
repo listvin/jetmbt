@@ -42,6 +42,14 @@ public class WebHandle {
         this.assignedToUrl = assignedToUrl;
     }
 
+    private static final String xroot = ")BUILDINGROOT(";
+    public static WebHandle createRootHandle(JetURL url){
+        return new WebHandle(url, xroot, ElementType.terminal, true);
+    }
+    public boolean isRoot(){
+        return xpath.equals(xroot);
+    }
+
     @Override
     public int hashCode(){ return hash; }
     @Override

@@ -4,6 +4,7 @@ import Common.ElementType;
 import Common.GraphDumper;
 import Common.Logger;
 import Common.Utils;
+import org.eclipse.jetty.util.ArrayQueue;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
@@ -36,13 +37,40 @@ public class EFG {
     }
 
     //TODO turn this in use instead of builder's inside search with check through isScannedOnce(Event)
-//    private void starterBfs(){
-//
-//    }
-//    public BuilderRequest pickStart() {
-//        if (getNodesCount() == Event.getGlobalTicksCount()) return null;
-//
-//    }
+    public BuilderRequest pickStart() {
+
+        //checking, if there are some unexplored nodes
+        if (getNodesCount() == Event.getGlobalTicksCount()) return null;
+
+        //choosing node, which will be source for bfs and target for initial BuilderRequest
+        for (Event source : adjList.keySet()) if (!source.isTicked()) {
+
+            //initialising bfs: queue for nodes to visit
+            Queue<Event> q = new ArrayDeque<>();
+            q.add(source);
+            //initialising bfs: map for recovering route
+            HashMap<Event, Event> par = new HashMap<>();
+            par.put(source, source);
+
+            //bfs cycle
+            while (!q.isEmpty()){
+                Event cur = q.poll(); //withdrawing node to visit from queue
+                for (Edge edge : revList.get(cur)) { //for each path going from this node
+                    if (edge.destination.handle.isAssignedToUrl()){ //we will check if it is desired node for starting route
+                        State state = new State(edge.destination.handle.url);
+                        state.sequence.add(edge.destination);
+                        for (; !cur.equals(source); cur = par.get(cur)) state.sequence.add(cur);
+                        return new BuilderRequest(state.sequence.get(state.sequence.size()-1), state, 0);
+                        //state.sequence.add(source); //we need to get to the node, which is previous to exploration target, builder will perform the next step
+                    } else if (!par.containsKey(edge.destination)){ //or add it to queue if needed otherwise, with rev link for recovering
+                        par.put(edge.destination, cur);
+                        q.add(edge.destination);
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
     public boolean isScannedOnce(Event event) {
         return adjList.containsKey(event) && adjList.get(event).size() > 0;
@@ -410,8 +438,6 @@ public class EFG {
         }
         return ans;
     }
-
-
     public void run() {
         validate();
     }

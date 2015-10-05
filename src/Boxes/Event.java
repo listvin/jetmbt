@@ -46,9 +46,10 @@ public class Event extends Tickable{
         hash = handle.hashCode() + Utils.hashString(context)*239;
     }
 
-    /**Factory method for convenient creating of fake element. Will be terminal*/
-    public static Event createTerminal(String name){
-        return creationFinalizer(new Event(new WebHandle(JetURL.createOwn404(), name, ElementType.terminal), "")); //#hardcode
+    /**Factory method for convenient creating of root element. Will be terminal*/
+
+    public static Event createRoot(String url){
+        return create(WebHandle.createRootHandle(new JetURL(url)), "");
     }
 
     public static Event create(WebHandle handle, String context){
@@ -97,8 +98,10 @@ public class Event extends Tickable{
         }
         switch (handle.eltype){
             case clickable: we.click(); break;
-            //case writable: we.sendKeys(context); break;
-            case terminal: assert false : "terminal elements was touched"; break;
+//            case writable: we.sendKeys(context); break;
+            case terminal:
+                if (handle.isRoot()) return true;
+                assert false : "terminal elements was touched"; break;
             default: assert false : "this shouldn't have happened???"; break;
         }
         return true;
